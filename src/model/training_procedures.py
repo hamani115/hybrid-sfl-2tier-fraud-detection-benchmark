@@ -3,6 +3,15 @@ import torch.nn.functional as F
 
 from slbd.common import RequestType
 
+def _get_inputs_and_labels(batch, device):
+    if "img" in batch:
+        x = batch["img"]
+    else:
+        x = batch["x"]
+
+    labels = batch["label"]
+
+    return x.to(device), labels
 
 def train_ce(model, server_model_proxy, trainloader, optimizer):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -12,10 +21,9 @@ def train_ce(model, server_model_proxy, trainloader, optimizer):
 
     tot_loss = 0.
     for batch in trainloader:
-        img, labels = batch["img"], batch["label"]
-        img = img.to(device)
+        x, labels = _get_inputs_and_labels(batch, device)
 
-        output = model(img)
+        output = model(x)
 
         optimizer.zero_grad()
 

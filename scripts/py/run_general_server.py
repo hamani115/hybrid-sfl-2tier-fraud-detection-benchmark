@@ -26,29 +26,32 @@ def run(cfg):
     if "log_to_wandb" in cfg and cfg.log_to_wandb:
         init_wandb(cfg, {"num_clients": num_clients})
 
+    model_cfg = OmegaConf.to_container(cfg.model)
+    model_name = model_cfg.pop("model_name")
+
     model_init_kwargs = {
-        "model_name": cfg.model.model_name,
-        "pretrained": cfg.model.pretrained,
+        "model_name": model_name,
         "num_classes": cfg.dataset.num_classes,
         "seed": cfg.general.seed,
-    } | OmegaConf.to_container(cfg.algorithm.model)
+    } | model_cfg | OmegaConf.to_container(cfg.algorithm.model)
     print(model_init_kwargs)
     client_model = instantiate_general_model(for_client=True, **model_init_kwargs)
     server_model = instantiate_general_model(for_client=False, **model_init_kwargs)
 
     server_model_args = {
-        "model_name": cfg.model.model_name,
+        "model_name": model_name,
         "server_partitions": OmegaConf.to_container(cfg.algorithm.model)["server_partitions"],
         "last_client_layer": cfg.algorithm.model.last_client_layer,
-    }
+    } | model_cfg
 
     optim_dict = OmegaConf.to_container(cfg.optimizer)
+    loss_dict = OmegaConf.to_container(cfg.loss) if "loss" in cfg else {}
     strategy = Strategy(
         num_clients=num_clients,
         client_model=client_model,
         server_model=server_model,
         process_all_clients_as_batch=cfg.algorithm.process_all_clients_as_batch,
-        server_model_train_config=optim_dict | server_model_args,
+        server_model_train_config=optim_dict | server_model_args | loss_dict,
         server_model_evaluate_config=server_model_args,
         client_train_config=optim_dict | OmegaConf.to_container(cfg.client_train_config),
         fraction_fit=cfg.strategy_config.fraction_fit,

@@ -1,6 +1,7 @@
 import torch.nn as nn
 
 from src.model.architectures.resnet import resnet18
+from src.model.architectures.fraud_mlp import fraud_mlp
 from src.utils.stochasticity import TempRng
 
 
@@ -8,6 +9,8 @@ def instantiate_model(model_name, seed, **kwargs):
     with TempRng(seed):
         if model_name == "resnet18":
             model = resnet18(**kwargs)
+        elif model_name == "fraud_mlp":
+            model = fraud_mlp(**kwargs)
         else:
             raise ValueError(f"Model {model_name} not supported")
 
@@ -16,8 +19,10 @@ def instantiate_model(model_name, seed, **kwargs):
 
 def instantiate_general_model(client_partitions, server_partitions, for_client, **kwargs):
     partitions = client_partitions if for_client else server_partitions
+
     if isinstance(partitions, str):
         return instantiate_model(**kwargs, partition=partitions)
+
     elif isinstance(partitions, dict):
         model = nn.ModuleDict({
             k: instantiate_model(**kwargs, partition=v)
@@ -25,3 +30,6 @@ def instantiate_general_model(client_partitions, server_partitions, for_client, 
         })
         model.is_complete_model = False
         return model
+
+    else:
+        raise ValueError(f"Unsupported partitions type: {type(partitions)}")

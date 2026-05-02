@@ -1,0 +1,53 @@
+dataset_name: creditcard
+
+# Set this in the Slurm script or terminal:
+# export CREDITCARD_CSV=/path/to/creditcard.csv
+csv_path: ${oc.env:CREDITCARD_CSV}
+
+input_shape: [30]
+input_dim: 30
+test_percentage: 0.2
+num_classes: 2
+
+target_col: Class
+time_col: Time
+
+feature_cols:
+  - Time
+  - Amount
+  - V1
+  - V2
+  - V3
+  - V4
+  - V5
+  - V6
+  - V7
+  - V8
+  - V9
+  - V10
+  - V11
+  - V12
+  - V13
+  - V14
+  - V15
+  - V16
+  - V17
+  - V18
+  - V19
+  - V20
+  - V21
+  - V22
+  - V23
+  - V24
+  - V25
+  - V26
+  - V27
+  - V28
+
+split:
+  type: chronological
+  train_fraction: 0.8
+
+scaling:
+  type: standard
+  fit_on_train_only: true

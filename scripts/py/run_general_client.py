@@ -29,13 +29,16 @@ def run(cfg):
         client_idx
     )
 
+    model_cfg = OmegaConf.to_container(cfg.model)
+    model_name = model_cfg.pop("model_name")
+
     model = instantiate_general_model(
         **OmegaConf.to_container(cfg.algorithm.model),
-        model_name=cfg.model.model_name,
-        pretrained=cfg.model.pretrained,
+        **model_cfg,
+        model_name=model_name,
         num_classes=cfg.dataset.num_classes,
         seed=cfg.general.seed,
-        for_client=True
+        for_client=True,
     )
 
     client = Client(

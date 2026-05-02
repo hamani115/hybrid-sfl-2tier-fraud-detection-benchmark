@@ -20,14 +20,21 @@ class ServerModel(NumPyServerModel):
         self.round_loss = 0.
         self.stateful_rng = StatefulRng(10)
         self.num_processed_batches = 0
-
+        self.class_weight = None
+    
+    def _compute_loss(self, output, labels):
+        if self.class_weight is not None:
+            return F.cross_entropy(output, labels, weight=self.class_weight)
+        return F.cross_entropy(output, labels)
+    
     def _update_server_model_and_get_grad(self, embeddings, labels):
         embeddings, labels = embeddings.to(self.device), labels.to(self.device)
         embeddings.requires_grad_(True)
 
         with self.stateful_rng:
             output = self.model(embeddings)
-        loss = F.cross_entropy(output, labels)
+        # loss = F.cross_entropy(output, labels)
+        loss = self._compute_loss(output, labels)
 
         self.optimizer.zero_grad()
         loss.backward()
@@ -54,11 +61,16 @@ class ServerModel(NumPyServerModel):
     def _init_server_model(self, parameters, config):
         model_init_kwargs = {
             "model_name": config["model_name"],
-            "seed": 10, # weight are immediately overridden
-            "pretrained": False,
+            "seed": 10,  # weights are immediately overridden
+            "pretrained": config.get("pretrained", False),
             "num_classes": self.num_classes,
             "last_client_layer": config["last_client_layer"],
         }
+
+        for optional_key in ["input_dim", "dropout"]:
+            if optional_key in config:
+                model_init_kwargs[optional_key] = config[optional_key]
+        
         print(model_init_kwargs)
         if "server_partitions" in config:
             model = instantiate_general_model(
@@ -77,6 +89,14 @@ class ServerModel(NumPyServerModel):
         assert {"lr", "optimizer_name", "last_client_layer", "model_name"} <= set(config.keys())
 
         self.round_loss = 0.
+        if "class_weight" in config:
+            self.class_weight = torch.tensor(
+                config["class_weight"],
+                dtype=torch.float32,
+                device=self.device,
+            )
+        else:
+            self.class_weight = None
         self.model = self._init_server_model(parameters, config)
         self.optimizer = init_optimizer(self.model, config)
         self.model.train()

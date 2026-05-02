@@ -1,0 +1,4 @@
+method: dirichlet_label
+num_partitions: 2
+alpha: 0.5
+seed: ${general.seed}

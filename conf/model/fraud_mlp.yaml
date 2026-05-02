@@ -1,0 +1,5 @@
+model_name: fraud_mlp
+pretrained: false
+
+input_dim: 30
+dropout: 0.2

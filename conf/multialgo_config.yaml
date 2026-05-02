@@ -16,3 +16,5 @@ strategy_config:
   fraction_fit: 1.0
   fraction_evaluate: 1.0
 experiment_name: multialgo_comparison
+loss:
+  class_weight: [1.0, 50.0]
