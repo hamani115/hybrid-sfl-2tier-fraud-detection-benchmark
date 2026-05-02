@@ -19,7 +19,13 @@ cd "$ROOT"
 export PYTHONPATH="$ROOT"
 export HYDRA_FULL_ERROR=1
 
-export CREDITCARD_CSV="/scratch-beegfs/datasets/$USER/creditcard/creditcard.csv"
+# Confirmed dataset path on Hayrat
+export CREDITCARD_CSV="/data/datasets/$USER/creditcard/creditcard.csv"
+
+if [ ! -f "$CREDITCARD_CSV" ]; then
+  echo "ERROR: creditcard.csv not found at: $CREDITCARD_CSV"
+  exit 1
+fi
 
 readarray -t HOSTS < <(scontrol show hostnames "$SLURM_JOB_NODELIST")
 SERVER_NODE="${HOSTS[0]}"
@@ -54,16 +60,24 @@ CONFIG="\
   loss.class_weight=[1.0,50.0] \
 "
 
+export CONFIG
+
+echo "CONFIG=$CONFIG"
+
 # Server
 srun -N1 -n1 -w "$SERVER_NODE" --exclusive bash -lc "
   source /data/datasets/$USER/venv_split_algos/bin/activate
   cd '$ROOT'
+
   export PYTHONPATH='$ROOT'
   export HYDRA_FULL_ERROR=1
   export CREDITCARD_CSV='$CREDITCARD_CSV'
   export COLEXT_N_CLIENTS=2
+  export CONFIG='$CONFIG'
 
   echo SERVER host: \$(hostname)
+  echo SERVER CREDITCARD_CSV: \$CREDITCARD_CSV
+  echo SERVER CONFIG: \$CONFIG
 
   python -u scripts/py/run_general_server.py \$CONFIG
 " > "$ROOT/server_${SLURM_JOB_ID}.log" 2>&1 &
@@ -74,13 +88,18 @@ sleep 20
 srun -N1 -n1 -w "$CLIENT0_NODE" --exclusive bash -lc "
   source /data/datasets/$USER/venv_split_algos/bin/activate
   cd '$ROOT'
+
   export PYTHONPATH='$ROOT'
   export HYDRA_FULL_ERROR=1
   export CREDITCARD_CSV='$CREDITCARD_CSV'
   export COLEXT_SERVER_ADDRESS='${SERVER_ADDR}'
   export COLEXT_CLIENT_ID=0
+  export CONFIG='$CONFIG'
 
   echo CLIENT0 host: \$(hostname)
+  echo CLIENT0 CREDITCARD_CSV: \$CREDITCARD_CSV
+  echo CLIENT0 SERVER: \$COLEXT_SERVER_ADDRESS
+  echo CLIENT0 ID: \$COLEXT_CLIENT_ID
 
   python -u scripts/py/run_general_client.py \$CONFIG
 " > "$ROOT/client0_${SLURM_JOB_ID}.log" 2>&1 &
@@ -89,13 +108,18 @@ srun -N1 -n1 -w "$CLIENT0_NODE" --exclusive bash -lc "
 srun -N1 -n1 -w "$CLIENT1_NODE" --exclusive bash -lc "
   source /data/datasets/$USER/venv_split_algos/bin/activate
   cd '$ROOT'
+
   export PYTHONPATH='$ROOT'
   export HYDRA_FULL_ERROR=1
   export CREDITCARD_CSV='$CREDITCARD_CSV'
   export COLEXT_SERVER_ADDRESS='${SERVER_ADDR}'
   export COLEXT_CLIENT_ID=1
+  export CONFIG='$CONFIG'
 
   echo CLIENT1 host: \$(hostname)
+  echo CLIENT1 CREDITCARD_CSV: \$CREDITCARD_CSV
+  echo CLIENT1 SERVER: \$COLEXT_SERVER_ADDRESS
+  echo CLIENT1 ID: \$COLEXT_CLIENT_ID
 
   python -u scripts/py/run_general_client.py \$CONFIG
 " > "$ROOT/client1_${SLURM_JOB_ID}.log" 2>&1 &
