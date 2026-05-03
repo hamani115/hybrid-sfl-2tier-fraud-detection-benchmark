@@ -128,18 +128,33 @@ class Strategy(SlbdStrategy):
     def _aggregate_custom_metrics(self, results):
         tot_num_examples = sum([r[1].num_examples for r in results])
         keys = results[0][1].metrics.keys()
-        metrics = {
-            k: sum([r.metrics[k] * r.num_examples for _, r in results]) / tot_num_examples
-            for k in keys
-        }
+
+        # Metrics that should be summed across clients, not averaged.
+        # activation_comm_mb is already a per-client total for the round,
+        # so the protocol-level communication cost is the sum across clients.
+        sum_metric_keys = {"activation_comm_mb"}
+
+        metrics = {}
+        for k in keys:
+            if k in sum_metric_keys:
+                metrics[k] = sum([r.metrics[k] for _, r in results])
+            else:
+                metrics[k] = (
+                    sum([r.metrics[k] * r.num_examples for _, r in results])
+                    / tot_num_examples
+                )
+
         metrics_stds = {
             f"{k}_std": np.std([r.metrics[k] for _, r in results]).item()
             for k in keys
         }
+
         metrics["elapsed_time"] = time.time() - self.start_training_time
         metrics["round_time"] = time.time() - self._rount_start_time
+
         if wandb.run is not None:
             wandb.log(metrics)
+
         return metrics | metrics_stds
 
     def aggregate_server_fit(self, server_round, results):

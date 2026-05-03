@@ -33,7 +33,8 @@ ROUNDS="${ROUNDS:-5}"
 NUM_CLIENTS=4
 PORT=8080
 
-RUN_NAME="${PROTOCOL}_c${NUM_CLIENTS}_alpha${ALPHA}_seed${SEED}_r${ROUNDS}"
+RUN_ID="${RUN_ID:-${SLURM_JOB_ID:-manual}}"
+RUN_NAME="${PROTOCOL}_c${NUM_CLIENTS}_alpha${ALPHA}_seed${SEED}_r${ROUNDS}_run${RUN_ID}"
 
 readarray -t HOSTS < <(scontrol show hostnames "$SLURM_JOB_NODELIST")
 SERVER_NODE="${HOSTS[0]}"
