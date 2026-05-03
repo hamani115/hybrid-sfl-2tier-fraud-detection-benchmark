@@ -4,6 +4,7 @@ outputs
 wandb
 slurm/history
 .wandb_cache
+data
 
 *.pdf
 *.err
@@ -11,7 +12,6 @@ slurm/history
 *.ipynb
 *.env
 *.txt
-*.csv
 *.pth
 *.zip
 *.json
