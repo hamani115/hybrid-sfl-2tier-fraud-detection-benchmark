@@ -4,6 +4,89 @@ import re
 import pandas as pd
 import matplotlib.pyplot as plt
 
+def get_split_setup_columns(df: pd.DataFrame):
+    """
+    Setup columns for comparing split points.
+    We exclude split_point because it becomes the line variable.
+    """
+    possible_setup_cols = [
+        "protocol",
+        "num_clients",
+        "alpha",
+        "seed",
+        "rounds",
+    ]
+    return [col for col in possible_setup_cols if col in df.columns]
+
+
+def plot_split_point_comparison(
+    df: pd.DataFrame,
+    setup_cols: list[str],
+    x_col: str,
+    y_col: str,
+    xlabel: str,
+    ylabel: str,
+    filename: str,
+    split_dir: Path,
+    title_metric: str,
+):
+    required_cols = set(setup_cols + ["split_point", "round", x_col, y_col])
+    if not required_cols.issubset(df.columns):
+        return
+
+    for setup_key, setup_group in df.groupby(setup_cols, dropna=False):
+        if not isinstance(setup_key, tuple):
+            setup_key = (setup_key,)
+
+        setup_values = dict(zip(setup_cols, setup_key))
+        split_points = sorted(setup_group["split_point"].dropna().unique())
+
+        if len(split_points) < 2:
+            continue
+
+        setup_text = setup_to_string(setup_values)
+        setup_safe = safe_filename(setup_text)
+
+        setup_plot_dir = split_dir / setup_safe
+        setup_plot_dir.mkdir(parents=True, exist_ok=True)
+
+        plt.figure()
+
+        for split_point, split_group in setup_group.groupby("split_point"):
+            needed_cols = list(dict.fromkeys(["round", x_col, y_col]))
+            data = split_group[needed_cols].dropna().copy()
+
+            if data.empty:
+                continue
+
+            if x_col == "round":
+                data = (
+                    data.groupby("round")[y_col]
+                    .mean()
+                    .reset_index()
+                    .sort_values("round")
+                )
+                plot_x = data["round"]
+                plot_y = data[y_col]
+            else:
+                data = (
+                    data.groupby("round")[[x_col, y_col]]
+                    .mean()
+                    .reset_index()
+                    .sort_values(x_col)
+                )
+                plot_x = data[x_col]
+                plot_y = data[y_col]
+
+            plt.plot(plot_x, plot_y, marker="o", label=split_point)
+
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
+        plt.title(f"{title_metric}\n{setup_text}")
+        plt.legend(title="Split point")
+        plt.tight_layout()
+        plt.savefig(setup_plot_dir / filename, dpi=300)
+        plt.close()
 
 def safe_filename(name: str) -> str:
     """Make run/setup names safe for folder/file names."""
@@ -262,10 +345,12 @@ def main():
 
     per_run_dir = plots_dir / "per_run"
     comparison_dir = plots_dir / "protocol_comparison"
+    split_dir = plots_dir / "split_point_comparison"
     summary_plots_dir = plots_dir / "summary"
 
     per_run_dir.mkdir(parents=True, exist_ok=True)
     comparison_dir.mkdir(parents=True, exist_ok=True)
+    split_dir.mkdir(parents=True, exist_ok=True)
     summary_plots_dir.mkdir(parents=True, exist_ok=True)
 
     round_df = pd.read_csv(summary_dir / "round_metrics.csv")
@@ -274,6 +359,7 @@ def main():
     time_col = get_time_column(round_df)
     round_time_col = get_round_time_column(round_df)
     setup_cols = get_setup_columns(round_df)
+    split_setup_cols = get_split_setup_columns(round_df)
 
     print(f"Using setup columns for protocol comparison: {setup_cols}")
 
@@ -394,6 +480,60 @@ def main():
 
         group.to_csv(run_plot_dir / "round_metrics_for_this_run.csv", index=False)
 
+    # ------------------------------------------------------------------
+# Split-point comparison plots
+# Same setup values, different split-point lines.
+# ------------------------------------------------------------------
+if split_setup_cols and "split_point" in round_df.columns:
+    plot_split_point_comparison(
+        df=round_df,
+        setup_cols=split_setup_cols,
+        x_col="round",
+        y_col="eval_auprc",
+        xlabel="Round",
+        ylabel="AUPRC",
+        filename="auprc_over_rounds.png",
+        split_dir=split_dir,
+        title_metric="AUPRC over rounds by split point",
+    )
+
+    plot_split_point_comparison(
+        df=round_df,
+        setup_cols=split_setup_cols,
+        x_col="round",
+        y_col="eval_f1",
+        xlabel="Round",
+        ylabel="F1-score",
+        filename="f1_over_rounds.png",
+        split_dir=split_dir,
+        title_metric="F1-score over rounds by split point",
+    )
+
+    plot_split_point_comparison(
+        df=round_df,
+        setup_cols=split_setup_cols,
+        x_col="round",
+        y_col="eval_recall",
+        xlabel="Round",
+        ylabel="Recall",
+        filename="recall_over_rounds.png",
+        split_dir=split_dir,
+        title_metric="Recall over rounds by split point",
+    )
+
+    if time_col is not None:
+        plot_split_point_comparison(
+            df=round_df,
+            setup_cols=split_setup_cols,
+            x_col=time_col,
+            y_col="eval_auprc",
+            xlabel="Elapsed time (s)",
+            ylabel="AUPRC",
+            filename="auprc_vs_elapsed_time.png",
+            split_dir=split_dir,
+            title_metric="AUPRC vs elapsed time by split point",
+        )
+    
     # ------------------------------------------------------------------
     # Protocol-comparison plots
     # Same setup values, different protocol lines.

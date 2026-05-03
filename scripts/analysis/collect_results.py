@@ -6,7 +6,10 @@ from omegaconf import OmegaConf
 
 
 RUN_RE = re.compile(
-    r"(?P<protocol>.+)_c(?P<num_clients>\d+)_alpha(?P<alpha>[\d.]+)_seed(?P<seed>\d+)_r(?P<rounds>\d+)(?:_run(?P<run_id>.+))?$"
+    r"(?P<protocol>.+)_c(?P<num_clients>\d+)_alpha(?P<alpha>[\d.]+)"
+    r"_seed(?P<seed>\d+)_r(?P<rounds>\d+)"
+    r"(?:_split(?P<split_point>[A-Za-z0-9_]+))?"
+    r"(?:_run(?P<run_id>.+))?$"
 )
 
 
@@ -33,6 +36,7 @@ def parse_run_name(run_dir: Path) -> dict:
     out["alpha"] = float(out["alpha"])
     out["seed"] = int(out["seed"])
     out["rounds"] = int(out["rounds"])
+    out["split_point"] = out.get("split_point") or "unknown"
     out["run_id"] = out.get("run_id")
     return out
 
