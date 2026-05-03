@@ -1,0 +1,93 @@
+partitioning:
+  method: dirichlet_label
+  num_partitions: 4
+  alpha: 0.1
+  seed: ${general.seed}
+algorithm:
+  algorithm_name: splitfedv1
+  process_all_clients_as_batch: false
+  model:
+    client_partitions: client
+    server_partitions: server
+    last_client_layer: block1
+  client_kwargs:
+    train_fn: src.model.training_procedures.train_ce
+    eval_fn: src.model.evaluation_procedures.evaluate_model
+  num_training_server_models: -1
+dataset:
+  dataset_name: creditcard
+  csv_path: ${oc.env:CREDITCARD_CSV}
+  input_shape:
+  - 30
+  input_dim: 30
+  test_percentage: 0.2
+  num_classes: 2
+  target_col: Class
+  time_col: Time
+  feature_cols:
+  - Time
+  - Amount
+  - V1
+  - V2
+  - V3
+  - V4
+  - V5
+  - V6
+  - V7
+  - V8
+  - V9
+  - V10
+  - V11
+  - V12
+  - V13
+  - V14
+  - V15
+  - V16
+  - V17
+  - V18
+  - V19
+  - V20
+  - V21
+  - V22
+  - V23
+  - V24
+  - V25
+  - V26
+  - V27
+  - V28
+  split:
+    type: chronological
+    train_fraction: 0.8
+  scaling:
+    type: standard
+    fit_on_train_only: true
+model:
+  model_name: fraud_mlp
+  pretrained: false
+  input_dim: 30
+  dropout: 0.2
+optimizer:
+  optimizer_name: adam
+  lr: 0.001
+  weight_decay: 1.0e-05
+device_capacities:
+  weak_device: weak
+  strong_device: strong
+general:
+  seed: 20
+  num_rounds: 50
+client_train_config:
+  lte: 1
+  batch_size: 512
+strategy_config:
+  fraction_fit: 1.0
+  fraction_evaluate: 1.0
+experiment_name: multialgo_comparison
+loss:
+  class_weight:
+  - 1.0
+  - 50.0
+communication:
+  embedding_dim: 64
+  bytes_per_float: 4
+num_clients: 4
