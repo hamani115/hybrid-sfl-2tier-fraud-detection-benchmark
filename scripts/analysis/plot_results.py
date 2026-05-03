@@ -481,58 +481,58 @@ def main():
         group.to_csv(run_plot_dir / "round_metrics_for_this_run.csv", index=False)
 
     # ------------------------------------------------------------------
-# Split-point comparison plots
-# Same setup values, different split-point lines.
-# ------------------------------------------------------------------
-if split_setup_cols and "split_point" in round_df.columns:
-    plot_split_point_comparison(
-        df=round_df,
-        setup_cols=split_setup_cols,
-        x_col="round",
-        y_col="eval_auprc",
-        xlabel="Round",
-        ylabel="AUPRC",
-        filename="auprc_over_rounds.png",
-        split_dir=split_dir,
-        title_metric="AUPRC over rounds by split point",
-    )
-
-    plot_split_point_comparison(
-        df=round_df,
-        setup_cols=split_setup_cols,
-        x_col="round",
-        y_col="eval_f1",
-        xlabel="Round",
-        ylabel="F1-score",
-        filename="f1_over_rounds.png",
-        split_dir=split_dir,
-        title_metric="F1-score over rounds by split point",
-    )
-
-    plot_split_point_comparison(
-        df=round_df,
-        setup_cols=split_setup_cols,
-        x_col="round",
-        y_col="eval_recall",
-        xlabel="Round",
-        ylabel="Recall",
-        filename="recall_over_rounds.png",
-        split_dir=split_dir,
-        title_metric="Recall over rounds by split point",
-    )
-
-    if time_col is not None:
+    # Split-point comparison plots
+    # Same setup values, different split-point lines.
+    # ------------------------------------------------------------------
+    if split_setup_cols and "split_point" in round_df.columns:
         plot_split_point_comparison(
             df=round_df,
             setup_cols=split_setup_cols,
-            x_col=time_col,
+            x_col="round",
             y_col="eval_auprc",
-            xlabel="Elapsed time (s)",
+            xlabel="Round",
             ylabel="AUPRC",
-            filename="auprc_vs_elapsed_time.png",
+            filename="auprc_over_rounds.png",
             split_dir=split_dir,
-            title_metric="AUPRC vs elapsed time by split point",
+            title_metric="AUPRC over rounds by split point",
         )
+
+        plot_split_point_comparison(
+            df=round_df,
+            setup_cols=split_setup_cols,
+            x_col="round",
+            y_col="eval_f1",
+            xlabel="Round",
+            ylabel="F1-score",
+            filename="f1_over_rounds.png",
+            split_dir=split_dir,
+            title_metric="F1-score over rounds by split point",
+        )
+
+        plot_split_point_comparison(
+            df=round_df,
+            setup_cols=split_setup_cols,
+            x_col="round",
+            y_col="eval_recall",
+            xlabel="Round",
+            ylabel="Recall",
+            filename="recall_over_rounds.png",
+            split_dir=split_dir,
+            title_metric="Recall over rounds by split point",
+        )
+
+        if time_col is not None:
+            plot_split_point_comparison(
+                df=round_df,
+                setup_cols=split_setup_cols,
+                x_col=time_col,
+                y_col="eval_auprc",
+                xlabel="Elapsed time (s)",
+                ylabel="AUPRC",
+                filename="auprc_vs_elapsed_time.png",
+                split_dir=split_dir,
+                title_metric="AUPRC vs elapsed time by split point",
+            )
     
     # ------------------------------------------------------------------
     # Protocol-comparison plots
