@@ -8,3 +8,5 @@ python-dotenv==1.0.1
 torch==2.4.1
 slbd @ git+https://github.com/sands-lab/splitbud.git@87d151eb30644aea4035a7407c3695f2000f5465
 torchvision==0.19.1
+pandas==2.2.3
+scikit-learn==1.5.2
