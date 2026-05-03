@@ -110,7 +110,7 @@ def plot_protocol_comparison(
     If there are repeated runs for the same protocol/setup/round,
     the script averages them.
     """
-    required_cols = set(setup_cols + ["protocol", x_col, y_col])
+    required_cols = set(setup_cols + ["protocol", "round", x_col, y_col])
     if not required_cols.issubset(df.columns):
         return
 
@@ -135,22 +135,40 @@ def plot_protocol_comparison(
         plt.figure()
 
         for protocol, protocol_group in setup_group.groupby("protocol"):
-            data = protocol_group[[x_col, y_col, "round"]].dropna().copy()
+            # Avoid duplicate columns when x_col == "round"
+            needed_cols = list(dict.fromkeys(["round", x_col, y_col]))
+
+            data = protocol_group[needed_cols].dropna().copy()
 
             if data.empty:
                 continue
 
             # Average repeated runs for the same protocol/setup/round.
-            data = (
-                data.groupby("round")[[x_col, y_col]]
-                .mean()
-                .reset_index()
-                .sort_values(x_col)
-            )
+            if x_col == "round":
+                data = (
+                    data.groupby("round")[y_col]
+                    .mean()
+                    .reset_index()
+                    .sort_values("round")
+                )
+
+                plot_x = data["round"]
+                plot_y = data[y_col]
+
+            else:
+                data = (
+                    data.groupby("round")[[x_col, y_col]]
+                    .mean()
+                    .reset_index()
+                    .sort_values(x_col)
+                )
+
+                plot_x = data[x_col]
+                plot_y = data[y_col]
 
             plt.plot(
-                data[x_col],
-                data[y_col],
+                plot_x,
+                plot_y,
                 marker="o",
                 label=f"{protocol}",
             )
@@ -162,7 +180,6 @@ def plot_protocol_comparison(
         plt.tight_layout()
         plt.savefig(setup_plot_dir / filename, dpi=300)
         plt.close()
-
 
 def plot_protocol_comparison_comm(
     df: pd.DataFrame,
