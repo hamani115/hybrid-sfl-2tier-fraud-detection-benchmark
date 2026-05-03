@@ -30,7 +30,7 @@ PROTOCOL="${PROTOCOL:-splitfedv2}"
 ALPHA="${ALPHA:-0.5}"
 SEED="${SEED:-10}"
 ROUNDS="${ROUNDS:-5}"
-NUM_CLIENTS=4
+NUM_CLIENTS="${NUM_CLIENTS:-4}"
 PORT=8080
 
 RUN_ID="${RUN_ID:-${SLURM_JOB_ID:-manual}}"
@@ -38,6 +38,13 @@ RUN_NAME="${PROTOCOL}_c${NUM_CLIENTS}_alpha${ALPHA}_seed${SEED}_r${ROUNDS}_run${
 
 readarray -t HOSTS < <(scontrol show hostnames "$SLURM_JOB_NODELIST")
 SERVER_NODE="${HOSTS[0]}"
+
+REQUIRED_NODES=$((NUM_CLIENTS + 1))
+
+if [ "${#HOSTS[@]}" -lt "$REQUIRED_NODES" ]; then
+  echo "ERROR: NUM_CLIENTS=$NUM_CLIENTS requires $REQUIRED_NODES nodes, but only ${#HOSTS[@]} nodes were allocated."
+  exit 1
+fi
 
 SERVER_ADDR="${SERVER_NODE}:${PORT}"
 
@@ -115,7 +122,7 @@ srun -N1 -n1 -w "$SERVER_NODE" --exclusive bash -lc "
 sleep 20
 
 # Clients
-for CLIENT_ID in 0 1 2 3; do
+for ((CLIENT_ID=0; CLIENT_ID<NUM_CLIENTS; CLIENT_ID++)); do
   CLIENT_NODE="${HOSTS[$((CLIENT_ID + 1))]}"
 
   echo "Launching CLIENT${CLIENT_ID} on $CLIENT_NODE"
