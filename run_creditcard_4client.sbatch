@@ -97,24 +97,13 @@ srun -N1 -n1 -w "$SERVER_NODE" --exclusive bash -lc "
   echo SERVER host: \$(hostname)
   echo SERVER CONFIG: \$CONFIG
 
-  echo "===== GPU CHECK ====="
+  echo '===== GPU CHECK ====='
   hostname
   nvidia-smi || true
 
-  python - <<'PY'
-  import os
-  import torch
+  python -c 'import os, torch; print(\"CUDA_VISIBLE_DEVICES =\", os.environ.get(\"CUDA_VISIBLE_DEVICES\")); print(\"torch version =\", torch.__version__); print(\"torch CUDA build =\", torch.version.cuda); print(\"torch.cuda.is_available() =\", torch.cuda.is_available()); print(\"GPU count =\", torch.cuda.device_count() if torch.cuda.is_available() else 0); print(\"GPU name =\", torch.cuda.get_device_name(0) if torch.cuda.is_available() else \"None\")'
 
-  print("CUDA_VISIBLE_DEVICES =", os.environ.get("CUDA_VISIBLE_DEVICES"))
-  print("torch version =", torch.__version__)
-  print("torch CUDA build =", torch.version.cuda)
-  print("torch.cuda.is_available() =", torch.cuda.is_available())
-
-  if torch.cuda.is_available():
-      print("GPU count =", torch.cuda.device_count())
-      print("GPU name =", torch.cuda.get_device_name(0))
-  PY
-  echo "====================="
+  echo '====================='
 
   python -u scripts/py/run_general_server.py \$CONFIG
 " > "$ROOT/server_${SLURM_JOB_ID}.log" 2>&1 &
@@ -142,24 +131,13 @@ for ((CLIENT_ID=0; CLIENT_ID<NUM_CLIENTS; CLIENT_ID++)); do
     echo CLIENT${CLIENT_ID} SERVER: \$COLEXT_SERVER_ADDRESS
     echo CLIENT${CLIENT_ID} ID: \$COLEXT_CLIENT_ID
 
-    echo "===== GPU CHECK ====="
+    echo '===== GPU CHECK ====='
     hostname
     nvidia-smi || true
 
-    python - <<'PY'
-    import os
-    import torch
+    python -c 'import os, torch; print(\"CUDA_VISIBLE_DEVICES =\", os.environ.get(\"CUDA_VISIBLE_DEVICES\")); print(\"torch version =\", torch.__version__); print(\"torch CUDA build =\", torch.version.cuda); print(\"torch.cuda.is_available() =\", torch.cuda.is_available()); print(\"GPU count =\", torch.cuda.device_count() if torch.cuda.is_available() else 0); print(\"GPU name =\", torch.cuda.get_device_name(0) if torch.cuda.is_available() else \"None\")'
 
-    print("CUDA_VISIBLE_DEVICES =", os.environ.get("CUDA_VISIBLE_DEVICES"))
-    print("torch version =", torch.__version__)
-    print("torch CUDA build =", torch.version.cuda)
-    print("torch.cuda.is_available() =", torch.cuda.is_available())
-
-    if torch.cuda.is_available():
-        print("GPU count =", torch.cuda.device_count())
-        print("GPU name =", torch.cuda.get_device_name(0))
-    PY
-    echo "====================="
+    echo '====================='
 
     python -u scripts/py/run_general_client.py \$CONFIG
   " > "$ROOT/client${CLIENT_ID}_${SLURM_JOB_ID}.log" 2>&1 &
