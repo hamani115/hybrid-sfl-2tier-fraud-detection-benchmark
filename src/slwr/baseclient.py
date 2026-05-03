@@ -50,10 +50,37 @@ class BaseClient(NumPyClient):
             else:
                 for key in losses_dict:
                     losses_dict_sum[key] += losses_dict[key]
+        # return (
+        #     self.get_parameters({}),
+        #     len(self.trainset),
+        #     losses_dict_sum | { "train_time": time.time() - start_time }
+        # )
+        train_time = time.time() - start_time
+
+        # Estimated split-learning activation communication.
+        # For FraudMLP with split point block1:
+        # client output embedding shape is [batch_size, 64].
+        # During training, activations go client -> server and gradients return server -> client.
+        embedding_dim = int(config.get("embedding_dim", 64))
+        bytes_per_float = int(config.get("bytes_per_float", 4))
+
+        activation_comm_bytes = (
+            2
+            * len(self.trainset)
+            * int(config["lte"])
+            * embedding_dim
+            * bytes_per_float
+        )
+
+        activation_comm_mb = activation_comm_bytes / (1024 ** 2)
+
         return (
             self.get_parameters({}),
             len(self.trainset),
-            losses_dict_sum | { "train_time": time.time() - start_time }
+            losses_dict_sum | {
+                "train_time": train_time,
+                "activation_comm_mb": activation_comm_mb,
+            }
         )
 
     def evaluate(self, parameters, config):

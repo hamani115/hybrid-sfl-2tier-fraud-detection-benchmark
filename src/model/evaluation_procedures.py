@@ -8,8 +8,14 @@ from sklearn.metrics import (
     precision_score,
     recall_score,
     roc_auc_score,
+    confusion_matrix,
+    brier_score_loss
 )
 
+BMR_FP_COST = 1.0
+BMR_FN_COST = 100.0
+BMR_TN_COST = 0.0
+BMR_TP_COST = 0.0
 
 def _get_inputs_and_labels(batch, device):
     if "img" in batch:
@@ -70,7 +76,7 @@ def evaluate_model(model, server_model_proxy, valloader):
     # Extra fraud metrics only for binary classification.
     if len(all_probs) == len(all_labels):
         y_prob = np.asarray(all_probs)
-
+        
         metrics["precision"] = float(
             precision_score(y_true, y_pred, zero_division=0)
         )
@@ -80,6 +86,53 @@ def evaluate_model(model, server_model_proxy, valloader):
         metrics["f1"] = float(
             f1_score(y_true, y_pred, zero_division=0)
         )
+        
+        # Default threshold confusion matrix
+        tn, fp, fn, tp = confusion_matrix(y_true, y_pred, labels=[0, 1]).ravel()
+
+        metrics["tn"] = int(tn)
+        metrics["fp"] = int(fp)
+        metrics["fn"] = int(fn)
+        metrics["tp"] = int(tp)
+
+        # BMR threshold
+        fp_cost = BMR_FP_COST
+        fn_cost = BMR_FN_COST
+        tn_cost = BMR_TN_COST
+        tp_cost = BMR_TP_COST
+
+        bmr_threshold = (fp_cost - tn_cost) / (
+            (fp_cost - tn_cost) + (fn_cost - tp_cost)
+        )
+
+        y_pred_bmr = (y_prob >= bmr_threshold).astype(int)
+
+        bmr_tn, bmr_fp, bmr_fn, bmr_tp = confusion_matrix(
+            y_true, y_pred_bmr, labels=[0, 1]
+        ).ravel()
+
+        metrics["bmr_threshold"] = float(bmr_threshold)
+        metrics["bmr_cost_ratio_fn_fp"] = float(fn_cost / fp_cost)
+        metrics["bmr_tn"] = int(bmr_tn)
+        metrics["bmr_fp"] = int(bmr_fp)
+        metrics["bmr_fn"] = int(bmr_fn)
+        metrics["bmr_tp"] = int(bmr_tp)
+
+        metrics["bmr_precision"] = float(
+            precision_score(y_true, y_pred_bmr, zero_division=0)
+        )
+        metrics["bmr_recall"] = float(
+            recall_score(y_true, y_pred_bmr, zero_division=0)
+        )
+        metrics["bmr_f1"] = float(
+            f1_score(y_true, y_pred_bmr, zero_division=0)
+        )
+
+        metrics["bmr_risk"] = float(
+            (fp_cost * bmr_fp + fn_cost * bmr_fn) / len(y_true)
+        )
+
+        metrics["brier_score"] = float(brier_score_loss(y_true, y_prob))
 
         try:
             metrics["auroc"] = float(roc_auc_score(y_true, y_prob))

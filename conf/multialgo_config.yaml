@@ -18,3 +18,11 @@ strategy_config:
 experiment_name: multialgo_comparison
 loss:
   class_weight: [1.0, 50.0]
+communication:
+  embedding_dim: 64
+  bytes_per_float: 4
+# bmr:
+#   fp_cost: 1.0
+#   fn_cost: 100.0
+#   tn_cost: 0.0
+#   tp_cost: 0.0

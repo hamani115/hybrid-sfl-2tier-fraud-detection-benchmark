@@ -45,6 +45,7 @@ def run(cfg):
     } | model_cfg
 
     optim_dict = OmegaConf.to_container(cfg.optimizer)
+    communication_dict = OmegaConf.to_container(cfg.communication) if "communication" in cfg else {}
     loss_dict = OmegaConf.to_container(cfg.loss) if "loss" in cfg else {}
     strategy = Strategy(
         num_clients=num_clients,
@@ -53,7 +54,7 @@ def run(cfg):
         process_all_clients_as_batch=cfg.algorithm.process_all_clients_as_batch,
         server_model_train_config=optim_dict | server_model_args | loss_dict,
         server_model_evaluate_config=server_model_args,
-        client_train_config=optim_dict | OmegaConf.to_container(cfg.client_train_config),
+        client_train_config=optim_dict | OmegaConf.to_container(cfg.client_train_config) | communication_dict,
         fraction_fit=cfg.strategy_config.fraction_fit,
         fraction_evaluate=cfg.strategy_config.fraction_evaluate,
         init_server_model_fn=server_model_fn,
