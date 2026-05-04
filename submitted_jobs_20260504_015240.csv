@@ -1,0 +1,2 @@
+timestamp,benchmark,job_id,protocol,num_clients,alpha,seed,split_point,rounds,state,exit_code,elapsed,slurm_out,server_log,client_logs
+Mon May  4 01:52:40 +03 2026,main_benchmark,26185,splitfedv1,4,100,10,block1,50,SUBMITTED,NA,NA,cc_sfl_4c_26185.out,server_26185.log," client0_26185.log client1_26185.log client2_26185.log client3_26185.log"

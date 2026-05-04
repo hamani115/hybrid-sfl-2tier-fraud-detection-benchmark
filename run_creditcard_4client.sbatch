@@ -1,5 +1,5 @@
 #!/bin/bash -l
-#SBATCH --job-name=cc_sfl_4c
+#SBATCH --job-name=cc_sfl
 #SBATCH --partition=compute
 #SBATCH --nodes=5
 #SBATCH --ntasks=5
@@ -7,7 +7,7 @@
 #SBATCH --cpus-per-task=4
 #SBATCH --time=02:00:00
 #SBATCH --exclusive
-#SBATCH --output=cc_sfl_4c_%j.out
+#SBATCH --output=logs/slurm/cc_sfl_%j.out
 
 set -euo pipefail
 
@@ -15,6 +15,8 @@ ROOT="$SLURM_SUBMIT_DIR"
 
 source /data/datasets/$USER/venv_split_algos/bin/activate
 cd "$ROOT"
+
+mkdir -p "$ROOT/logs/slurm"
 
 export PYTHONPATH="$ROOT"
 export HYDRA_FULL_ERROR=1
@@ -25,13 +27,19 @@ if [ ! -f "$CREDITCARD_CSV" ]; then
   exit 1
 fi
 
+# ------------------------------------------------------------
 # Configurable experiment variables
+# ------------------------------------------------------------
 PROTOCOL="${PROTOCOL:-splitfedv2}"
 ALPHA="${ALPHA:-0.5}"
 SEED="${SEED:-10}"
 ROUNDS="${ROUNDS:-5}"
 NUM_CLIENTS="${NUM_CLIENTS:-4}"
 SPLIT_POINT="${SPLIT_POINT:-block1}"
+
+# Unique port per Slurm job.
+# This does not make jobs run in parallel.
+#PORT="${PORT:-$((20000 + SLURM_JOB_ID % 40000))}"
 PORT=8080
 
 case "$SPLIT_POINT" in
@@ -54,6 +62,13 @@ esac
 RUN_ID="${RUN_ID:-${SLURM_JOB_ID:-manual}}"
 RUN_NAME="${PROTOCOL}_c${NUM_CLIENTS}_alpha${ALPHA}_seed${SEED}_r${ROUNDS}_split${SPLIT_POINT}_run${RUN_ID}"
 
+# All job-specific logs go here
+JOB_DIR="$ROOT/logs/creditcard/${RUN_NAME}"
+mkdir -p "$JOB_DIR"
+
+# Copy main sbatch stdout/stderr into the job folder too
+exec > >(tee "$JOB_DIR/main_${SLURM_JOB_ID}.out") 2>&1
+
 readarray -t HOSTS < <(scontrol show hostnames "$SLURM_JOB_NODELIST")
 SERVER_NODE="${HOSTS[0]}"
 
@@ -66,6 +81,23 @@ fi
 
 SERVER_ADDR="${SERVER_NODE}:${PORT}"
 
+cat > "$JOB_DIR/run_info.txt" <<EOF
+SLURM_JOB_ID=$SLURM_JOB_ID
+RUN_NAME=$RUN_NAME
+JOB_DIR=$JOB_DIR
+SERVER_NODE=$SERVER_NODE
+SERVER_ADDR=$SERVER_ADDR
+CREDITCARD_CSV=$CREDITCARD_CSV
+PROTOCOL=$PROTOCOL
+ALPHA=$ALPHA
+SEED=$SEED
+ROUNDS=$ROUNDS
+NUM_CLIENTS=$NUM_CLIENTS
+SPLIT_POINT=$SPLIT_POINT
+EMBEDDING_DIM=$EMBEDDING_DIM
+HOSTS=${HOSTS[*]}
+EOF
+
 echo "SERVER_NODE=$SERVER_NODE"
 echo "SERVER_ADDR=$SERVER_ADDR"
 echo "CREDITCARD_CSV=$CREDITCARD_CSV"
@@ -73,9 +105,11 @@ echo "PROTOCOL=$PROTOCOL"
 echo "ALPHA=$ALPHA"
 echo "SEED=$SEED"
 echo "ROUNDS=$ROUNDS"
+echo "NUM_CLIENTS=$NUM_CLIENTS"
 echo "RUN_NAME=$RUN_NAME"
 echo "SPLIT_POINT=$SPLIT_POINT"
 echo "EMBEDDING_DIM=$EMBEDDING_DIM"
+echo "JOB_DIR=$JOB_DIR"
 
 CONFIG="\
   dataset=creditcard \
@@ -104,9 +138,12 @@ CONFIG="\
 
 export CONFIG
 
+echo "$CONFIG" > "$JOB_DIR/config_overrides.txt"
 echo "CONFIG=$CONFIG"
 
+# ------------------------------------------------------------
 # Server
+# ------------------------------------------------------------
 srun -N1 -n1 -w "$SERVER_NODE" --exclusive bash -lc "
   source /data/datasets/$USER/venv_split_algos/bin/activate
   cd '$ROOT'
@@ -128,7 +165,7 @@ srun -N1 -n1 -w "$SERVER_NODE" --exclusive bash -lc "
 
   echo '====================='
 
-  GPU_LOG='$ROOT/gpu_server_${SLURM_JOB_ID}.csv'
+  GPU_LOG='$JOB_DIR/gpu_server_${SLURM_JOB_ID}.csv'
   (
     while true; do
       nvidia-smi --query-gpu=timestamp,name,utilization.gpu,memory.used,power.draw \
@@ -139,15 +176,19 @@ srun -N1 -n1 -w "$SERVER_NODE" --exclusive bash -lc "
   GPU_MONITOR_PID=\$!
 
   python -u scripts/py/run_general_server.py \$CONFIG
+  STATUS=\$?
 
   kill \$GPU_MONITOR_PID 2>/dev/null || true
+  wait \$GPU_MONITOR_PID 2>/dev/null || true
 
-  python -u scripts/py/run_general_server.py \$CONFIG
-" > "$ROOT/server_${SLURM_JOB_ID}.log" 2>&1 &
+  exit \$STATUS
+" > "$JOB_DIR/server_${SLURM_JOB_ID}.log" 2>&1 &
 
 sleep 20
 
+# ------------------------------------------------------------
 # Clients
+# ------------------------------------------------------------
 for ((CLIENT_ID=0; CLIENT_ID<NUM_CLIENTS; CLIENT_ID++)); do
   CLIENT_NODE="${HOSTS[$((CLIENT_ID + 1))]}"
 
@@ -176,7 +217,7 @@ for ((CLIENT_ID=0; CLIENT_ID<NUM_CLIENTS; CLIENT_ID++)); do
 
     echo '====================='
 
-    GPU_LOG='$ROOT/gpu_client${CLIENT_ID}_${SLURM_JOB_ID}.csv'
+    GPU_LOG='$JOB_DIR/gpu_client${CLIENT_ID}_${SLURM_JOB_ID}.csv'
     (
       while true; do
         nvidia-smi --query-gpu=timestamp,name,utilization.gpu,memory.used,power.draw \
@@ -187,12 +228,16 @@ for ((CLIENT_ID=0; CLIENT_ID<NUM_CLIENTS; CLIENT_ID++)); do
     GPU_MONITOR_PID=\$!
 
     python -u scripts/py/run_general_client.py \$CONFIG
+    STATUS=\$?
 
     kill \$GPU_MONITOR_PID 2>/dev/null || true
+    wait \$GPU_MONITOR_PID 2>/dev/null || true
 
-    python -u scripts/py/run_general_client.py \$CONFIG
-  " > "$ROOT/client${CLIENT_ID}_${SLURM_JOB_ID}.log" 2>&1 &
+    exit \$STATUS
+  " > "$JOB_DIR/client${CLIENT_ID}_${SLURM_JOB_ID}.log" 2>&1 &
 done
 
 wait
+
 echo DONE
+echo "Logs saved in: $JOB_DIR"
