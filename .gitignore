@@ -1,7 +1,7 @@
 __pycache__
 dcgm
-outputs
-logs
+outputs/
+logs/
 wandb
 slurm/history
 .wandb_cache
