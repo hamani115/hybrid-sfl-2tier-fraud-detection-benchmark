@@ -2,6 +2,7 @@ __pycache__
 dcgm
 outputs/
 logs/
+my_venv/
 wandb
 slurm/history
 .wandb_cache

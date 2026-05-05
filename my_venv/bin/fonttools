@@ -1,8 +1,0 @@
-#!/bin/sh
-'''exec' /home/aalmarzouqi/Desktop/UOB_Student/master_courses_sem2/ITML608_Big_Data/project_term_paper/project/hayrat-split-learning-setup/my_venv/bin/python3.9 "$0" "$@"
-' '''
-import sys
-from fontTools.__main__ import main
-if __name__ == '__main__':
-    sys.argv[0] = sys.argv[0].removesuffix('.exe')
-    sys.exit(main())
