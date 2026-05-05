@@ -1,0 +1,3 @@
+protocol,num_clients,n_runs,eval_auprc,eval_f1,eval_recall,eval_bmr_risk,fit_elapsed_time
+splitfedv1,2,1,0.6652,0.0000,0.0000,0.1317,31.8937
+splitfedv2,2,1,0.7458,0.0000,0.0000,0.0808,32.0856

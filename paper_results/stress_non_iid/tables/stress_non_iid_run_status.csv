@@ -1,0 +1,7 @@
+benchmark,run_name,protocol,num_clients,alpha,seed,rounds,split_point,run_id,path,has_fit_metrics,has_eval_metrics,n_round_rows,status
+stress_non_iid,splitfedv1_c2_alpha0.1_seed10_r5_splitblock1_run26247,splitfedv1,2,0.1,10,5,block1,26247,outputs/stress_non_iid/splitfedv1_c2_alpha0.1_seed10_r5_splitblock1_run26247,True,True,5,METRICS_FOUND
+stress_non_iid,splitfedv1_c3_alpha0.1_seed10_r5_splitblock1_run26249,splitfedv1,3,0.1,10,5,block1,26249,outputs/stress_non_iid/splitfedv1_c3_alpha0.1_seed10_r5_splitblock1_run26249,False,False,0,MISSING_METRICS
+stress_non_iid,splitfedv1_c4_alpha0.1_seed10_r5_splitblock1_run26252,splitfedv1,4,0.1,10,5,block1,26252,outputs/stress_non_iid/splitfedv1_c4_alpha0.1_seed10_r5_splitblock1_run26252,False,False,0,MISSING_METRICS
+stress_non_iid,splitfedv2_c2_alpha0.1_seed10_r5_splitblock1_run26248,splitfedv2,2,0.1,10,5,block1,26248,outputs/stress_non_iid/splitfedv2_c2_alpha0.1_seed10_r5_splitblock1_run26248,True,True,5,METRICS_FOUND
+stress_non_iid,splitfedv2_c3_alpha0.1_seed10_r5_splitblock1_run26251,splitfedv2,3,0.1,10,5,block1,26251,outputs/stress_non_iid/splitfedv2_c3_alpha0.1_seed10_r5_splitblock1_run26251,False,False,0,MISSING_METRICS
+stress_non_iid,splitfedv2_c4_alpha0.1_seed10_r5_splitblock1_run26253,splitfedv2,4,0.1,10,5,block1,26253,outputs/stress_non_iid/splitfedv2_c4_alpha0.1_seed10_r5_splitblock1_run26253,False,False,0,MISSING_METRICS

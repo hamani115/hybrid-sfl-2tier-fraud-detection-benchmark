@@ -1,0 +1,13 @@
+run_name,run_id,gpu_logs_found,gpu_process_count,server_gpu_util_mean_pct,server_gpu_util_max_pct,server_gpu_memory_max_mb,client_gpu_util_mean_pct,client_gpu_util_max_pct,client_gpu_memory_max_mb,overall_gpu_util_max_pct,overall_gpu_memory_max_mb
+splitfedv1_c2_alpha0.5_seed10_r50_splitblock1_run26228,26228,True,3,5.656716417910448,11,161,1.7619047619047619,3,159,11,161
+splitfedv1_c2_alpha0.5_seed30_r50_splitblock1_run26234,26234,True,3,5.180555555555555,11,161,1.536231884057971,3,159,11,161
+splitfedv1_c3_alpha0.5_seed10_r50_splitblock1_run26230,26230,True,4,6.909090909090909,12,163,1.0502283105022832,3,159,12,163
+splitfedv1_c3_alpha0.5_seed30_r50_splitblock1_run26236,26236,True,4,6.887323943661972,17,163,1.0398009950248757,3,159,17,163
+splitfedv1_c4_alpha0.5_seed10_r50_splitblock1_run26232,26232,True,5,7.1976744186046515,15,163,0.8597560975609757,3,159,15,163
+splitfedv1_c4_alpha0.5_seed30_r50_splitblock1_run26238,26238,True,5,8.083333333333334,17,163,1.0404411764705883,3,159,17,163
+splitfedv2_c2_alpha0.5_seed10_r50_splitblock1_run26229,26229,True,3,5.567164179104478,11,161,1.753968253968254,3,159,11,161
+splitfedv2_c2_alpha0.5_seed30_r50_splitblock1_run26235,26235,True,3,5.375,11,161,1.676470588235294,3,159,11,161
+splitfedv2_c3_alpha0.5_seed10_r50_splitblock1_run26231,26231,True,4,6.75,10,161,0.958904109589041,3,159,10,161
+splitfedv2_c3_alpha0.5_seed30_r50_splitblock1_run26237,26237,True,4,7.3,17,161,1.196969696969697,3,159,17,161
+splitfedv2_c4_alpha0.5_seed10_r50_splitblock1_run26233,26233,True,5,7.1647058823529415,13,161,0.8425925925925926,3,159,13,161
+splitfedv2_c4_alpha0.5_seed30_r50_splitblock1_run26239,26239,True,5,8.507042253521126,17,161,1.0147058823529411,3,159,17,161

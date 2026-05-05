@@ -1,0 +1,7 @@
+protocol,num_clients,n_runs,n_metrics_found,completion_rate
+splitfedv1,2,1,1,1.0
+splitfedv1,3,1,0,0.0
+splitfedv1,4,1,0,0.0
+splitfedv2,2,1,1,1.0
+splitfedv2,3,1,0,0.0
+splitfedv2,4,1,0,0.0

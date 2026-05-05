@@ -5,13 +5,22 @@ import pandas as pd
 from omegaconf import OmegaConf
 
 
-RUN_RE = re.compile(
-    r"(?P<protocol>.+)_c(?P<num_clients>\d+)_alpha(?P<alpha>[\d.]+)"
-    r"_seed(?P<seed>\d+)_r(?P<rounds>\d+)"
-    r"(?:_split(?P<split_point>[A-Za-z0-9_]+))?"
-    r"(?:_run(?P<run_id>.+))?$"
-)
+# RUN_RE = re.compile(
+#     r"(?P<protocol>.+)_c(?P<num_clients>\d+)_alpha(?P<alpha>[\d.]+)"
+#     r"_seed(?P<seed>\d+)_r(?P<rounds>\d+)"
+#     r"(?:_split(?P<split_point>[A-Za-z0-9_]+))?"
+#     r"(?:_run(?P<run_id>.+))?$"
+# )
 
+RUN_RE = re.compile(
+    r"(?P<protocol>[^_]+)"
+    r"_c(?P<num_clients>\d+)"
+    r"_alpha(?P<alpha>[\d.]+)"
+    r"_seed(?P<seed>\d+)"
+    r"_r(?P<rounds>\d+)"
+    r"(?:_split(?P<split_point>[^_]+))?"
+    r"(?:_run(?P<run_id>\d+))?$"
+)
 
 def load_yaml(path: Path) -> dict:
     if not path.exists():

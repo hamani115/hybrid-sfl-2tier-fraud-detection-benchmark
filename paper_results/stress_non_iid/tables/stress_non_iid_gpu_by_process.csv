@@ -1,0 +1,7 @@
+run_name,run_id,role,gpu_log_file,gpu_sample_count,gpu_util_mean_pct,gpu_util_max_pct,gpu_memory_mean_mb,gpu_memory_max_mb,gpu_power_mean_w,gpu_power_max_w
+splitfedv1_c2_alpha0.1_seed10_r5_splitblock1_run26247,26247,client0,gpu_client0_26247.csv,11,0.5454545454545454,2,101.18181818181819,159,22.417272727272728,26.82
+splitfedv1_c2_alpha0.1_seed10_r5_splitblock1_run26247,26247,client1,gpu_client1_26247.csv,11,1.3636363636363635,3,101.18181818181819,159,22.213636363636365,26.54
+splitfedv1_c2_alpha0.1_seed10_r5_splitblock1_run26247,26247,server,gpu_server_26247.csv,15,2.533333333333333,6,84.8,159,20.194,25.73
+splitfedv2_c2_alpha0.1_seed10_r5_splitblock1_run26248,26248,client0,gpu_client0_26248.csv,11,0.45454545454545453,2,101.18181818181819,159,22.62818181818182,27.09
+splitfedv2_c2_alpha0.1_seed10_r5_splitblock1_run26248,26248,client1,gpu_client1_26248.csv,11,1.2727272727272727,3,101.18181818181819,159,22.355454545454545,26.64
+splitfedv2_c2_alpha0.1_seed10_r5_splitblock1_run26248,26248,server,gpu_server_26248.csv,15,2.1333333333333333,6,84.8,159,20.358666666666668,26.02
