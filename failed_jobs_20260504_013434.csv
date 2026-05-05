@@ -1,1 +1,0 @@
-timestamp,benchmark,job_id,protocol,num_clients,alpha,seed,split_point,rounds,state,exit_code,elapsed,reason
