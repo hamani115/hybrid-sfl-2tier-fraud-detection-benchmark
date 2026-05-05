@@ -1,74 +1,71 @@
 # Hybrid SFL Two-Tier Fraud Detection Benchmark
 
-This repository provides a Hayrat-tested experimental setup for benchmarking **two-tier Hybrid Split-Federated Learning (SFL)** protocols on the **ULB Credit Card Fraud Detection** dataset.
+This repository provides a Hayrat-tested benchmark setup for running and analyzing **two-tier Hybrid Split-Federated Learning (SFL)** protocols for **credit card fraud detection**.
 
-The current benchmark focuses on:
+The current branch, `creditcard-fraud-sfl`, adapts the original SplitBud / split-learning example code to a tabular fraud-detection setting using the **ULB Credit Card Fraud Detection** dataset, a lightweight MLP model, non-IID client partitioning, fraud-specific metrics, system-efficiency metrics, GPU monitoring, Slurm scripts, and paper-ready analysis scripts.
 
-- **SplitFedV1**
-- **SplitFedV2**
-- **Non-IID bank-silo simulation**
-- **4 clients + 1 server**
-- **Tabular fraud detection using a lightweight MLP**
-- **Fraud-specific metrics**
-- **System-efficiency metrics**
-- **Result collection and plotting scripts**
+The main supported benchmark currently focuses on:
 
-The repository is designed so new users can clone the repo, prepare the dataset, run the Slurm benchmark on the University of Bahrain Hayrat cluster, collect metrics, and generate plots.
-
----
-
-## 1. Project purpose
-
-The goal of this benchmark is to compare Hybrid SFL protocols under identical experimental conditions for credit-card fraud detection.
-
-The benchmark evaluates the trade-off between:
-
-1. **Detection quality**
-   - AUPRC
-   - AUROC
-   - F1-score
-   - Precision
-   - Recall
-   - Confusion matrix values
-   - BMR-based cost-sensitive metrics
-
-2. **System efficiency**
-   - Round time
-   - Elapsed time
-   - Client training time
-   - Estimated activation communication cost
-
-3. **Protocol behavior**
-   - SplitFedV1 vs SplitFedV2
-   - Different non-IID levels
-   - Different random seeds
-
-The setup is intended to be extended later to multi-tier or heterogeneity-aware protocols.
+- `splitfedv1`
+- `splitfedv2`
+- ULB Credit Card Fraud Detection dataset
+- Non-IID bank-silo simulation using Dirichlet label-skew partitioning
+- 2 to 4 clients plus 1 server
+- Split-point testing using `block1`, `block2`, and `block3`
+- Tabular fraud detection using `fraud_mlp`
+- AUPRC, AUROC, F1-score, precision, recall, confusion matrix values, BMR metrics, and Brier score
+- Elapsed time, round time, training time, estimated activation communication, and GPU-utilization logs
+- General analysis scripts and paper-ready analysis scripts
 
 ---
 
-## 2. Background and upstream references
+## 1. What this repository is for
 
-This repository builds on SplitBud-style split-learning examples and adapts them for a fraud-detection benchmark on Hayrat.
+The goal of this benchmark is to compare hybrid SFL protocols under matched experimental conditions for credit-card fraud detection.
 
-Useful upstream references:
+The benchmark is designed around three questions:
+
+1. **Detection quality**  
+   Which protocol gives better fraud-detection performance under class imbalance and non-IID client data?
+
+2. **System efficiency**  
+   How do split point, number of clients, and protocol choice affect runtime and estimated activation communication?
+
+3. **Deployment behavior**  
+   What practical limitations appear when running SFL on a physical HPC cluster instead of only using a local simulation?
+
+This repository is intended as a reproducible starting point for a term-paper / research-paper benchmark. It is also meant to be extendable later to more protocols such as FSL, LocFedMix, Cluster-Hybrid SFL, FLEX-SFL, ESFL, or hierarchical / multi-tier SFL.
+
+---
+
+## 2. Upstream references
+
+This repository builds on SplitBud-style split-learning code and runnable examples, then adapts them for fraud detection and Hayrat execution.
+
+Useful upstream repositories:
 
 - **SplitBud framework:** `sands-lab/splitbud`  
-  https://github.com/sands-lab/splitbud?tab=readme-ov-file
+  https://github.com/sands-lab/splitbud
 
 - **Split-learning runnable examples:** `BorisRado/split_learning_algorithms`  
-  https://github.com/BorisRado/split_learning_algorithms/tree/master
+  https://github.com/BorisRado/split_learning_algorithms
 
-This repository is not only a copy of the upstream example. It adds:
+This repository adds fraud-specific components on top of the upstream ideas:
 
-- ULB credit-card fraud dataset support
-- Tabular `FraudMLP` model
-- Dirichlet non-IID partitioning for simulated bank silos
-- Fraud-specific metrics
-- Bayes Minimum Risk (BMR) threshold metrics
+- ULB credit-card fraud dataset loading
+- Tabular `fraud_mlp` architecture
+- Chronological train/test split
+- Standard scaling fitted only on the training data
+- Dirichlet label-skew client partitioning
+- Fraud-specific metrics: AUPRC, AUROC, F1, precision, recall, confusion matrix values
+- BMR threshold and BMR risk metrics
+- Brier score
 - Estimated activation communication cost
-- 4-client Hayrat Slurm script
-- Result collection and plotting scripts
+- Split-point control for `block1`, `block2`, and `block3`
+- Slurm script for Hayrat multi-node execution
+- Per-run logs and GPU monitoring
+- General plotting scripts
+- Paper-ready analysis scripts
 
 ---
 
@@ -79,42 +76,49 @@ Important files and folders:
 ```text
 .
 ├── conf/
+│   ├── algorithm/
+│   │   ├── splitfedv1.yaml
+│   │   ├── splitfedv2.yaml
+│   │   └── other SplitBud algorithm configs
 │   ├── dataset/
 │   │   ├── cifar10.yaml
 │   │   └── creditcard.yaml
 │   ├── model/
 │   │   ├── resnet18.yaml
 │   │   └── fraud_mlp.yaml
+│   ├── optimizer/
 │   ├── partitioning/
 │   │   ├── iid.yaml
 │   │   ├── dirichlet.yaml
 │   │   └── creditcard_dirichlet.yaml
-│   ├── algorithm/
-│   │   ├── splitfedv1.yaml
-│   │   ├── splitfedv2.yaml
-│   │   └── other SplitBud algorithm configs
+│   ├── config.yaml
 │   └── multialgo_config.yaml
 │
 ├── scripts/
+│   ├── analysis/
+│   │   ├── collect_results.py
+│   │   └── plot_results.py
+│   ├── paper_analysis/
+│   │   └── paper_analysis.py
 │   ├── py/
 │   │   ├── run_general_server.py
 │   │   ├── run_general_client.py
 │   │   ├── run_server.py
 │   │   └── run_client.py
-│   └── analysis/
-│       ├── collect_results.py
-│       └── plot_results.py
+│   └── slurm/
+│       ├── run_benchmarks_main_and_clients.sh
+│       └── run_stress_non_iid.sh
 │
 ├── src/
 │   ├── data/
 │   │   └── loading.py
 │   ├── model/
 │   │   ├── architectures/
-│   │   │   ├── resnet.py
 │   │   │   ├── fraud_mlp.py
+│   │   │   ├── resnet.py
 │   │   │   └── utils.py
-│   │   ├── training_procedures.py
-│   │   └── evaluation_procedures.py
+│   │   ├── evaluation_procedures.py
+│   │   └── training_procedures.py
 │   └── slwr/
 │       ├── baseclient.py
 │       ├── server_model.py
@@ -129,52 +133,41 @@ Important files and folders:
 
 ---
 
-## 4. Experiment modes
+## 4. Main experiment path
 
-This repository has two main experiment paths.
-
-### 4.1 General multi-algorithm path
-
-Use this path for the fraud benchmark:
+Use the **general multi-algorithm path** for the credit-card fraud benchmark:
 
 ```text
 scripts/py/run_general_server.py
 scripts/py/run_general_client.py
 ```
 
-This path supports algorithm selection through Hydra:
-
-```bash
-algorithm=splitfedv1
-algorithm=splitfedv2
-```
-
-This is the path used by:
+This path is used by:
 
 ```text
 run_creditcard_4client.sbatch
 ```
 
-Use this for SplitFedV1 / SplitFedV2 comparison.
+It supports Hydra overrides such as:
 
----
+```bash
+algorithm=splitfedv1
+algorithm=splitfedv2
+dataset=creditcard
+model=fraud_mlp
+partitioning=creditcard_dirichlet
+algorithm.model.last_client_layer=block1
+```
 
-### 4.2 Original heterogeneous Hayrat path
-
-The older setup uses:
+The older scripts:
 
 ```text
 scripts/py/run_server.py
 scripts/py/run_client.py
-```
-
-and the script:
-
-```text
 run_split_learning_algorithms_3node.sbatch
 ```
 
-This is kept for reference, but it is **not** the main fraud benchmark path.
+are kept for reference and older SplitBud-style tests, but they are **not the recommended path for the fraud benchmark**.
 
 ---
 
@@ -202,7 +195,7 @@ Check the branch:
 git branch
 ```
 
-You should see:
+Expected:
 
 ```text
 * creditcard-fraud-sfl
@@ -212,13 +205,13 @@ You should see:
 
 ## 6. Create and activate the Python environment
 
-Use the existing Hayrat Python/Conda setup.
+On Hayrat, use the Python 3.9 environment and a dedicated virtual environment.
 
 ```bash
 conda activate py39
 ```
 
-Create a virtual environment:
+Create the virtual environment:
 
 ```bash
 python -m venv /data/datasets/$USER/venv_split_algos
@@ -236,7 +229,7 @@ Upgrade packaging tools:
 python -m pip install -U pip setuptools wheel
 ```
 
-Install the repository requirements:
+Install dependencies:
 
 ```bash
 python -m pip install -r requirements.txt
@@ -253,14 +246,14 @@ python -c "from slbd.server.app import start_server; from slbd.client.app import
 python -c "import src; print('repo src ok')"
 ```
 
-Expected output:
+Expected:
 
 ```text
 slbd ok
 repo src ok
 ```
 
-Also check PyTorch:
+Check PyTorch and CUDA visibility:
 
 ```bash
 python - <<'PY'
@@ -273,13 +266,13 @@ if torch.cuda.is_available():
 PY
 ```
 
-If `torch.cuda.is_available()` is `False`, the code will run on CPU. The code is GPU-capable, but GPU visibility depends on the Slurm allocation and Hayrat environment.
+If `torch.cuda.is_available()` is `False`, the code can still run on CPU, but GPU metrics will not represent GPU training. On Hayrat, check GPU availability inside the Slurm job logs because GPU visibility depends on the allocated node and environment.
 
 ---
 
-## 8. Download and upload the ULB Credit Card Fraud dataset
+## 8. Prepare the ULB Credit Card Fraud dataset
 
-The dataset is not included in this repository.
+The dataset is **not included** in this repository.
 
 Download it manually from Kaggle:
 
@@ -287,7 +280,7 @@ Download it manually from Kaggle:
 https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud
 ```
 
-After downloading and extracting it on your laptop, you should have:
+After extracting it, you should have:
 
 ```text
 creditcard.csv
@@ -299,7 +292,7 @@ Upload it to Hayrat. Example from your laptop:
 scp creditcard.csv <YOUR_HAYRAT_USER>@<HAYRAT_LOGIN_HOST>:/data/datasets/<YOUR_HAYRAT_USER>/creditcard/
 ```
 
-On Hayrat, the final path should be:
+On Hayrat, the expected path is:
 
 ```text
 /data/datasets/$USER/creditcard/creditcard.csv
@@ -311,16 +304,16 @@ Create the folder if needed:
 mkdir -p /data/datasets/$USER/creditcard
 ```
 
-Check the file:
-
-```bash
-ls -lh /data/datasets/$USER/creditcard/creditcard.csv
-```
-
-Set the dataset path:
+Set the environment variable:
 
 ```bash
 export CREDITCARD_CSV=/data/datasets/$USER/creditcard/creditcard.csv
+```
+
+Check the file:
+
+```bash
+ls -lh $CREDITCARD_CSV
 ```
 
 Verify the dataset:
@@ -339,7 +332,7 @@ print(df.columns.tolist())
 PY
 ```
 
-Expected output should be close to:
+Expected shape and class distribution:
 
 ```text
 (284807, 31)
@@ -352,36 +345,34 @@ Name: count, dtype: int64
 
 ---
 
-## 9. Dataset configuration
+## 9. Credit-card dataset configuration
 
-The credit-card dataset config is:
+The dataset config is:
 
 ```text
 conf/dataset/creditcard.yaml
 ```
 
-It defines:
+It uses:
 
 ```yaml
 dataset_name: creditcard
 csv_path: ${oc.env:CREDITCARD_CSV}
-
 input_shape: [30]
 input_dim: 30
 test_percentage: 0.2
 num_classes: 2
-
 target_col: Class
 time_col: Time
 ```
 
-The dataset uses 30 input features:
+The input features are:
 
 ```text
 Time, Amount, V1, V2, ..., V28
 ```
 
-The label is:
+The label column is:
 
 ```text
 Class
@@ -390,51 +381,66 @@ Class
 where:
 
 ```text
-0 = legitimate
-1 = fraud
+0 = legitimate transaction
+1 = fraud transaction
 ```
 
-The loader performs a chronological train/test split:
+The credit-card loader performs:
 
-```text
-80% train
-20% test
-```
+1. sorting by `Time`
+2. chronological train/test split
+3. 80% train and 20% test
+4. standard scaling fitted on the training set only
+5. Dirichlet label-skew partitioning across clients
 
-The train set is partitioned across clients using a Dirichlet label-skew partitioner.
+The test set is shared for evaluation, while the training set is partitioned across clients.
 
 ---
 
-## 10. Non-IID partitioning configuration
+## 10. Non-IID partitioning
 
-The credit-card non-IID config is:
+The credit-card partitioning config is:
 
 ```text
 conf/partitioning/creditcard_dirichlet.yaml
 ```
 
-Example:
+Default values:
 
 ```yaml
 method: dirichlet_label
-num_partitions: 4
+num_partitions: 2
 alpha: 0.5
 seed: ${general.seed}
 ```
 
-The `alpha` value controls non-IID severity:
+For Slurm runs, `num_partitions` and `alpha` are overridden by the sbatch script:
 
-```text
-alpha = 100  -> IID-like / almost uniform
-alpha = 1.0  -> moderate non-IID
-alpha = 0.5  -> stronger non-IID
+```bash
+partitioning.num_partitions=${NUM_CLIENTS}
+partitioning.alpha=${ALPHA}
 ```
 
-Avoid very small alpha values such as `0.01` at the beginning because the fraud class is extremely rare and some clients may receive too few fraud samples.
+The `alpha` value controls how uneven the label distribution is across clients:
+
+```text
+alpha = 100  -> IID-like / almost balanced
+alpha = 1.0  -> moderate non-IID
+alpha = 0.5  -> stronger non-IID
+alpha = 0.1  -> severe stress-test level; may create empty/invalid client partitions
+```
+
+For the main paper benchmark, use:
+
+```text
+100, 1.0, 0.5
+```
+
+Avoid very small alpha values for normal runs because this dataset has only 492 fraud samples and extreme skew may create clients with too few or even zero samples.
 
 ---
 
-## 11. Model configuration
+## 11. Fraud MLP model
 
 The fraud model config is:
 
@@ -451,34 +457,55 @@ input_dim: 30
 dropout: 0.2
 ```
 
-The architecture is implemented in:
+The model is implemented in:
 
 ```text
 src/model/architectures/fraud_mlp.py
 ```
 
-The full architecture is:
+Architecture:
 
 ```text
-Input: 30 features
+Input: 30 tabular features
 
 block1: Linear(30 -> 64), LayerNorm, ReLU, Dropout
 block2: Linear(64 -> 32), LayerNorm, ReLU, Dropout
-block3: Linear(32 -> 16), ReLU, Dropout
+block3: Linear(32 -> 16), ReLU, Dropout(dropout / 2)
 head:   Linear(16 -> 2)
 ```
 
-The default split point is:
+Supported split points:
 
 ```text
 block1
+block2
+block3
+head
 ```
 
-So:
+For the benchmark, use:
 
 ```text
+block1, block2, block3
+```
+
+Examples:
+
+```text
+SPLIT_POINT=block1
 Client model = block1
 Server model = block2 + block3 + head
+Embedding dimension = 64
+
+SPLIT_POINT=block2
+Client model = block1 + block2
+Server model = block3 + head
+Embedding dimension = 32
+
+SPLIT_POINT=block3
+Client model = block1 + block2 + block3
+Server model = head
+Embedding dimension = 16
 ```
 
 ---
@@ -523,7 +550,7 @@ print("full:", full(x).shape)
 PY
 ```
 
-Expected output:
+Expected:
 
 ```text
 client: torch.Size([8, 64])
@@ -541,7 +568,7 @@ Make sure `CREDITCARD_CSV` is set:
 export CREDITCARD_CSV=/data/datasets/$USER/creditcard/creditcard.csv
 ```
 
-Then run:
+Run:
 
 ```bash
 python - <<'PY'
@@ -571,16 +598,16 @@ print(dataset["train"][0])
 PY
 ```
 
-Expected output:
+Expected:
 
 ```text
 dict_keys(['train', 'test'])
-<number of train samples>
+<number of train samples for client 0>
 56962
 {'x': tensor([...]), 'label': tensor(0)}
 ```
 
-You should also see a log line like:
+You should also see a line like:
 
 ```text
 [creditcard] client=0 train_samples=... class_counts=[..., ...] test_samples=56962 test_counts=[56887, 75]
@@ -588,109 +615,169 @@ You should also see a log line like:
 
 ---
 
-## 14. Main Slurm script for 4 clients
+## 14. Main Slurm script
 
-The main benchmark script is:
+The main Slurm script is:
 
 ```text
 run_creditcard_4client.sbatch
 ```
 
-It runs:
+Despite the file name, the script now supports `NUM_CLIENTS`, but the Slurm header still requests 5 nodes/tasks by default:
 
 ```text
-1 server + 4 clients = 5 Slurm tasks
+1 server + 4 clients = 5 nodes/tasks
 ```
 
-The script is configured for:
+The important Slurm settings are:
 
-```text
---nodes=5
---ntasks=5
---ntasks-per-node=1
---cpus-per-task=4
+```bash
+#SBATCH --partition=compute
+#SBATCH --nodes=5
+#SBATCH --ntasks=5
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=4
+#SBATCH --time=02:00:00
+#SBATCH --exclusive
+#SBATCH --output=logs/slurm/cc_sfl_%j.out
 ```
 
-It uses the general SplitBud path:
+The script writes process logs and GPU logs into a per-run folder:
 
 ```text
-scripts/py/run_general_server.py
-scripts/py/run_general_client.py
+logs/creditcard/<RUN_NAME>/
+```
+
+The script writes Hydra outputs into:
+
+```text
+outputs/creditcard/<RUN_NAME>/
 ```
 
 ---
 
-## 15. Main experiment variables
+## 15. Slurm variables
 
-The Slurm script accepts environment variables:
+The main variables are passed as environment variables before `sbatch`.
 
 ```bash
 PROTOCOL=splitfedv2
 ALPHA=0.5
 SEED=10
 ROUNDS=5
+NUM_CLIENTS=4
+SPLIT_POINT=block1
 ```
 
-Defaults are usually:
+Defaults inside the script:
 
 ```text
-PROTOCOL = splitfedv2
-ALPHA    = 0.5
-SEED     = 10
-ROUNDS   = 5
-```
-
-The script fixes:
-
-```text
+PROTOCOL    = splitfedv2
+ALPHA       = 0.5
+SEED        = 10
+ROUNDS      = 5
 NUM_CLIENTS = 4
-local epochs = 1
-batch size = 512
-optimizer = Adam
-learning rate = 0.001
-weight decay = 0.00001
-split point = block1
-class weight = [1.0, 50.0]
-embedding_dim = 64
-bytes_per_float = 4
+SPLIT_POINT = block1
+PORT        = 8080
+```
+
+Supported protocols for the current fraud benchmark:
+
+```text
+splitfedv1
+splitfedv2
+```
+
+Supported split points:
+
+```text
+block1
+block2
+block3
+```
+
+The script automatically maps split point to embedding dimension:
+
+```text
+block1 -> 64
+block2 -> 32
+block3 -> 16
 ```
 
 ---
 
-## 16. Run a 4-client debug job
+## 16. Training hyperparameters used by the Slurm script
 
-Start with a short debug job:
+The Slurm script overrides these Hydra settings:
 
-```bash
-PROTOCOL=splitfedv2 ALPHA=0.5 SEED=10 ROUNDS=5 sbatch run_creditcard_4client.sbatch
+```text
+dataset=creditcard
+model=fraud_mlp
+partitioning=creditcard_dirichlet
+partitioning.num_partitions=${NUM_CLIENTS}
+partitioning.alpha=${ALPHA}
+algorithm=${PROTOCOL}
+algorithm.model.last_client_layer=${SPLIT_POINT}
+general.seed=${SEED}
+general.num_rounds=${ROUNDS}
+client_train_config.lte=1
+client_train_config.batch_size=512
+optimizer=adam
+optimizer.lr=0.001
+optimizer.weight_decay=0.00001
+strategy_config.fraction_fit=1.0
+strategy_config.fraction_evaluate=1.0
+loss.class_weight=[1.0,50.0]
+communication.embedding_dim=${EMBEDDING_DIM}
+communication.bytes_per_float=4
++num_clients=${NUM_CLIENTS}
++split_point=${SPLIT_POINT}
+hydra.run.dir=outputs/creditcard/${RUN_NAME}
 ```
 
-Check the queue:
+Important notes:
+
+- `lte=1` means one local training epoch per round.
+- `batch_size=512` is the main benchmark batch size.
+- `loss.class_weight=[1.0,50.0]` gives more weight to the fraud class during cross-entropy training.
+- `communication.embedding_dim` must match the split point.
+- `hydra.run.dir` includes the job ID so runs do not overwrite each other.
+
+---
+
+## 17. Run a short debug job
+
+Always start with 5 rounds.
+
+```bash
+PROTOCOL=splitfedv2 ALPHA=0.5 SEED=10 ROUNDS=5 NUM_CLIENTS=4 SPLIT_POINT=block1 sbatch run_creditcard_4client.sbatch
+```
+
+Check queue:
 
 ```bash
 squeue --me
 ```
 
-Check the logs:
+Check logs after the job starts:
 
 ```bash
-tail -n 100 server_<JOBID>.log
-tail -n 80 client0_<JOBID>.log
-tail -n 80 client1_<JOBID>.log
-tail -n 80 client2_<JOBID>.log
-tail -n 80 client3_<JOBID>.log
+RUN_NAME=<run_name_printed_by_job>
+ls logs/creditcard/$RUN_NAME
+
+tail -n 100 logs/creditcard/$RUN_NAME/server_<JOBID>.log
+tail -n 80 logs/creditcard/$RUN_NAME/client0_<JOBID>.log
 ```
 
-A successful run should show:
+Successful server logs usually contain:
 
 ```text
-fit_round 1 received 4 results and 0 failures
-evaluate_round 1 received 4 results and 0 failures
-...
-Run finished 5 round(s)
+fit_round 1 received ... results and 0 failures
+evaluate_round 1 received ... results and 0 failures
+Run finished ... round(s)
 ```
 
-Client logs should show:
+Successful client logs usually contain:
 
 ```text
 ChannelConnectivity.READY
@@ -701,105 +788,138 @@ Disconnect and shut down
 
 ---
 
-## 17. Run SplitFedV1 debug job
+## 18. Run SplitFedV1 debug job
 
-After SplitFedV2 works, run:
+After SplitFedV2 works:
 
 ```bash
-PROTOCOL=splitfedv1 ALPHA=0.5 SEED=10 ROUNDS=5 sbatch run_creditcard_4client.sbatch
+PROTOCOL=splitfedv1 ALPHA=0.5 SEED=10 ROUNDS=5 NUM_CLIENTS=4 SPLIT_POINT=block1 sbatch run_creditcard_4client.sbatch
 ```
-
-This should produce another output folder and another set of logs.
 
 ---
 
-## 18. Real experiment matrix
+## 19. Recommended paper benchmark design
 
-For final experiments, use 50 rounds:
+The final paper benchmark was organized into three experiment groups.
 
-```text
-ROUNDS=50
-```
+### 19.1 Main benchmark
 
-Recommended main matrix:
+Purpose: compare protocol and split point under IID-like and non-IID settings.
 
 ```text
 Protocols: splitfedv1, splitfedv2
 Clients: 4
 Alpha values: 100, 1.0, 0.5
-Seeds: 10, 20, 30
+Split points: block1, block2, block3
+Seeds: 10, 30
 Rounds: 50
 ```
 
 This gives:
 
 ```text
-2 protocols × 3 alpha values × 3 seeds = 18 runs
+2 protocols × 3 alpha values × 3 split points × 2 seeds = 36 runs
 ```
 
-Example commands:
+### 19.2 Client-count ablation
+
+Purpose: check scalability when increasing number of clients.
+
+```text
+Protocols: splitfedv1, splitfedv2
+Clients: 2, 3, 4
+Alpha: 0.5
+Split point: block1
+Seeds: 10, 30
+Rounds: 50
+```
+
+### 19.3 Severe non-IID stress test
+
+Purpose: test failure boundary under extreme label skew.
+
+```text
+Protocols: splitfedv1, splitfedv2
+Clients: 2, 3, 4
+Alpha: 0.1
+Split point: block1
+Seed: 10
+Rounds: 5 first
+```
+
+This stress test is not recommended as a normal benchmark setting because it can create empty or invalid client partitions.
+
+---
+
+## 20. Example manual commands
+
+Main benchmark examples:
 
 ```bash
-PROTOCOL=splitfedv1 ALPHA=100 SEED=10 ROUNDS=50 sbatch run_creditcard_4client.sbatch
-PROTOCOL=splitfedv2 ALPHA=100 SEED=10 ROUNDS=50 sbatch run_creditcard_4client.sbatch
+PROTOCOL=splitfedv1 ALPHA=100 SEED=10 ROUNDS=50 NUM_CLIENTS=4 SPLIT_POINT=block1 sbatch run_creditcard_4client.sbatch
+PROTOCOL=splitfedv2 ALPHA=100 SEED=10 ROUNDS=50 NUM_CLIENTS=4 SPLIT_POINT=block1 sbatch run_creditcard_4client.sbatch
 
-PROTOCOL=splitfedv1 ALPHA=1.0 SEED=10 ROUNDS=50 sbatch run_creditcard_4client.sbatch
-PROTOCOL=splitfedv2 ALPHA=1.0 SEED=10 ROUNDS=50 sbatch run_creditcard_4client.sbatch
-
-PROTOCOL=splitfedv1 ALPHA=0.5 SEED=10 ROUNDS=50 sbatch run_creditcard_4client.sbatch
-PROTOCOL=splitfedv2 ALPHA=0.5 SEED=10 ROUNDS=50 sbatch run_creditcard_4client.sbatch
+PROTOCOL=splitfedv1 ALPHA=0.5 SEED=10 ROUNDS=50 NUM_CLIENTS=4 SPLIT_POINT=block3 sbatch run_creditcard_4client.sbatch
+PROTOCOL=splitfedv2 ALPHA=0.5 SEED=10 ROUNDS=50 NUM_CLIENTS=4 SPLIT_POINT=block3 sbatch run_creditcard_4client.sbatch
 ```
 
-Repeat for:
+Client-count examples:
 
-```text
-SEED=20
-SEED=30
+```bash
+PROTOCOL=splitfedv1 ALPHA=0.5 SEED=10 ROUNDS=50 NUM_CLIENTS=2 SPLIT_POINT=block1 sbatch --nodes=3 --ntasks=3 run_creditcard_4client.sbatch
+PROTOCOL=splitfedv2 ALPHA=0.5 SEED=10 ROUNDS=50 NUM_CLIENTS=2 SPLIT_POINT=block1 sbatch --nodes=3 --ntasks=3 run_creditcard_4client.sbatch
+
+PROTOCOL=splitfedv1 ALPHA=0.5 SEED=10 ROUNDS=50 NUM_CLIENTS=3 SPLIT_POINT=block1 sbatch --nodes=4 --ntasks=4 run_creditcard_4client.sbatch
+PROTOCOL=splitfedv2 ALPHA=0.5 SEED=10 ROUNDS=50 NUM_CLIENTS=3 SPLIT_POINT=block1 sbatch --nodes=4 --ntasks=4 run_creditcard_4client.sbatch
 ```
 
----
+For 4 clients, the default sbatch header already requests 5 nodes/tasks:
 
-## 19. What the seed controls
-
-The seed is not a model-tuning trick. It controls randomness for reproducibility.
-
-In this benchmark, the seed affects:
-
-1. Model initialization
-2. Dirichlet client partitioning
-3. Training randomness such as dropout and batch order, depending on the training code
-
-Use multiple seeds so results are not based on one lucky or unlucky partition.
-
-Recommended final seeds:
-
-```text
-10, 20, 30
+```bash
+PROTOCOL=splitfedv1 ALPHA=0.5 SEED=10 ROUNDS=50 NUM_CLIENTS=4 SPLIT_POINT=block1 sbatch run_creditcard_4client.sbatch
 ```
 
 ---
 
-## 20. Output folders
+## 21. Sequential benchmark scripts
 
-Each Slurm run creates a Hydra output folder under:
-
-```text
-outputs/creditcard/
-```
-
-The run folder name is based on the experiment settings and job ID:
+If available in your branch, the helper scripts are under:
 
 ```text
-outputs/creditcard/<PROTOCOL>_c4_alpha<ALPHA>_seed<SEED>_r<ROUNDS>_run<JOBID>/
+scripts/slurm/
 ```
 
-Example:
+Examples:
+
+```bash
+bash scripts/slurm/run_benchmarks_main_and_clients.sh
+bash scripts/slurm/run_stress_non_iid.sh
+```
+
+The intended behavior is sequential submission:
 
 ```text
-outputs/creditcard/splitfedv2_c4_alpha0.5_seed10_r5_run25540/
+submit one Slurm job
+wait for it to finish
+record job ID and settings
+continue to the next setup
 ```
 
-Inside each folder, important files include:
+This is important for system-efficiency results. If many jobs run at the same time on the same hardware, elapsed time and GPU/resource metrics may be affected by resource contention.
+
+---
+
+## 22. Output folders
+
+Each run creates two important folders.
+
+### 22.1 Hydra metrics folder
+
+```text
+outputs/creditcard/<RUN_NAME>/
+```
+
+Important files:
 
 ```text
 fit_metrics.yaml
@@ -808,40 +928,62 @@ eval_metrics.yaml
 .hydra/overrides.yaml
 ```
 
-Use these to verify exactly what was run:
+Use these to inspect what was run:
 
 ```bash
 cat outputs/creditcard/<RUN_NAME>/.hydra/config.yaml
 cat outputs/creditcard/<RUN_NAME>/.hydra/overrides.yaml
 ```
 
----
-
-## 21. Logs
-
-The Slurm script also writes logs in the repository root:
+### 22.2 Log and GPU folder
 
 ```text
+logs/creditcard/<RUN_NAME>/
+```
+
+Important files:
+
+```text
+main_<JOBID>.out
 server_<JOBID>.log
 client0_<JOBID>.log
 client1_<JOBID>.log
 client2_<JOBID>.log
 client3_<JOBID>.log
+gpu_server_<JOBID>.csv
+gpu_client0_<JOBID>.csv
+gpu_client1_<JOBID>.csv
+gpu_client2_<JOBID>.csv
+gpu_client3_<JOBID>.csv
+run_info.txt
+config_overrides.txt
 ```
 
-These logs are useful for debugging.
-
-Example:
-
-```bash
-tail -n 100 server_<JOBID>.log
-```
+The exact client log files depend on `NUM_CLIENTS`.
 
 ---
 
-## 22. Metrics collected
+## 23. Run naming format
 
-### 22.1 Fit/training metrics
+The run name format is:
+
+```text
+<protocol>_c<num_clients>_alpha<alpha>_seed<seed>_r<rounds>_split<split_point>_run<jobid>
+```
+
+Example:
+
+```text
+splitfedv1_c4_alpha0.5_seed10_r50_splitblock3_run26208
+```
+
+This naming is important because analysis scripts parse settings from the folder name.
+
+---
+
+## 24. Metrics collected
+
+### 24.1 Fit metrics
 
 Stored in:
 
@@ -859,24 +1001,22 @@ elapsed_time
 round_time
 ```
 
-`activation_comm_mb` is an estimated activation communication cost. For the current split point `block1`, the client output embedding has dimension 64. The estimate is:
+`activation_comm_mb` is an estimated split-learning activation communication cost:
 
 ```text
-2 × number_of_local_samples × local_epochs × embedding_dim × 4 bytes
+2 × number_of_local_samples × local_epochs × embedding_dim × bytes_per_float
 ```
 
-The factor of 2 accounts for:
+The factor of 2 represents:
 
 ```text
 client -> server activations
 server -> client activation gradients
 ```
 
-This is an estimate of split-learning communication, not packet-level network measurement.
+This is a high-level estimate, not packet-level network measurement.
 
----
-
-### 22.2 Evaluation metrics
+### 24.2 Evaluation metrics
 
 Stored in:
 
@@ -899,6 +1039,7 @@ fp
 fn
 tp
 bmr_threshold
+bmr_cost_ratio_fn_fp
 bmr_tn
 bmr_fp
 bmr_fn
@@ -910,41 +1051,35 @@ bmr_risk
 brier_score
 ```
 
-Because the dataset is highly imbalanced, accuracy is not the main metric. Prefer:
+Because the dataset is highly imbalanced, prefer:
 
 ```text
 AUPRC
-F1
+F1-score
 Recall
 Precision
 AUROC
 BMR risk
 ```
 
+Do not rely on accuracy alone.
+
 ---
 
-## 23. Bayes Minimum Risk (BMR)
+## 25. BMR metrics
 
-BMR is used as an evaluation-time cost-sensitive thresholding method.
+BMR is used at evaluation time as a cost-sensitive decision threshold.
 
-The normal classifier threshold is roughly:
-
-```text
-p(fraud) >= 0.5
-```
-
-BMR uses a threshold based on misclassification cost.
-
-In this benchmark, the default cost assumption is:
+Default cost assumption in the evaluation code:
 
 ```text
 false positive cost = 1
 false negative cost = 100
-true positive cost = 0
 true negative cost = 0
+true positive cost = 0
 ```
 
-So:
+The BMR threshold is:
 
 ```text
 threshold = FP_cost / (FP_cost + FN_cost)
@@ -952,213 +1087,219 @@ threshold = 1 / (1 + 100)
 threshold ≈ 0.0099
 ```
 
-This does not change the trained model. It only changes the decision threshold used during evaluation.
+Important notes:
 
-When reporting results, standard-threshold metrics and BMR-thresholded metrics should be reported separately.
+- BMR does not change the trained model.
+- BMR only changes the decision threshold used during evaluation.
+- Standard-threshold metrics and BMR-threshold metrics should be interpreted separately.
+- The 1:100 cost ratio is an experiment assumption and should be reported clearly when used in a paper.
 
 ---
 
-## 24. Collect results into CSV
+## 26. General analysis workflow
 
-After running one or more jobs, collect all results:
-
-```bash
-python scripts/analysis/collect_results.py
-```
-
-This reads all folders under:
+The general analysis scripts read from:
 
 ```text
 outputs/creditcard/
 ```
 
-and writes:
+Collect results:
+
+```bash
+python scripts/analysis/collect_results.py
+```
+
+This writes:
 
 ```text
 results/summary/round_metrics.csv
 results/summary/final_metrics.csv
 ```
 
-### round_metrics.csv
-
-Contains every round from every run.
-
-Example:
-
-```text
-run_name, protocol, num_clients, alpha, seed, rounds, run_id, round, eval_auprc, eval_f1, ...
-```
-
-If one run has 50 rounds, it contributes 50 rows.
-
-### final_metrics.csv
-
-Contains only the final round from each run.
-
-If you have 18 runs, it should contain 18 rows.
-
----
-
-## 25. Generate plots
-
-After collecting results:
+Generate plots:
 
 ```bash
 python scripts/analysis/plot_results.py
 ```
 
-This creates plots under:
+This writes plots under:
 
 ```text
 results/plots/
 ```
 
-The plot folders are:
+Use this general workflow for quick checks across all runs in `outputs/creditcard`.
+
+---
+
+## 27. Paper-ready analysis workflow
+
+The paper-ready script is:
 
 ```text
-results/plots/per_run/
-results/plots/protocol_comparison/
-results/plots/summary/
+scripts/paper_analysis/paper_analysis.py
+```
+
+It expects benchmark folders like:
+
+```text
+outputs/main_benchmark/
+outputs/client_count_ablation/
+outputs/stress_non_iid/
+logs/creditcard/
+```
+
+Run all paper analyses:
+
+```bash
+python scripts/paper_analysis/paper_analysis.py --benchmark all --clean
+```
+
+If the client-count ablation folder does not include the 4-client baseline and you want to pull it from the main benchmark:
+
+```bash
+python scripts/paper_analysis/paper_analysis.py --benchmark all --clean --add-main-c4
+```
+
+Run one analysis only:
+
+```bash
+python scripts/paper_analysis/paper_analysis.py --benchmark main --clean
+python scripts/paper_analysis/paper_analysis.py --benchmark clients --clean
+python scripts/paper_analysis/paper_analysis.py --benchmark stress --clean
+```
+
+Outputs:
+
+```text
+paper_results/main_benchmark/
+paper_results/client_count_ablation/
+paper_results/stress_non_iid/
+```
+
+Each contains:
+
+```text
+tables/
+figures/
 ```
 
 ---
 
-### 25.1 Per-run plots
+## 28. Organizing outputs for paper analysis
 
-One folder per individual run:
-
-```text
-results/plots/per_run/<RUN_NAME>/
-```
-
-Example plots:
+The main sbatch script writes all Hydra metrics into:
 
 ```text
-auprc_over_rounds.png
-f1_over_rounds.png
-precision_over_rounds.png
-recall_over_rounds.png
-auroc_over_rounds.png
-bmr_risk_over_rounds.png
-auprc_vs_elapsed_time.png
-round_time_over_rounds.png
-auprc_vs_estimated_communication_mb.png
+outputs/creditcard/
 ```
 
-Use these to inspect one run.
+For paper analysis, move or copy selected run folders into separate benchmark folders.
+
+Example:
+
+```bash
+mkdir -p outputs/main_benchmark outputs/client_count_ablation outputs/stress_non_iid
+```
+
+Then copy/move relevant run folders:
+
+```bash
+mv outputs/creditcard/splitfedv1_c4_alpha100_seed10_r50_splitblock1_runXXXX outputs/main_benchmark/
+mv outputs/creditcard/splitfedv2_c2_alpha0.5_seed10_r50_splitblock1_runYYYY outputs/client_count_ablation/
+```
+
+Do not move `logs/creditcard/<RUN_NAME>` unless you want to reorganize logs too. The paper analysis script matches GPU logs by run name:
+
+```text
+outputs/main_benchmark/<RUN_NAME>/
+logs/creditcard/<RUN_NAME>/gpu_*.csv
+```
 
 ---
 
-### 25.2 Protocol-comparison plots
+## 29. Paper-analysis outputs
 
-These plots combine protocols that share the same setup except for the protocol name.
+Important main benchmark files:
+
+```text
+paper_results/main_benchmark/tables/main_clean_final_metrics.csv
+paper_results/main_benchmark/tables/main_clean_round_metrics.csv
+paper_results/main_benchmark/tables/paper_table_main_summary_mean_std.csv
+paper_results/main_benchmark/tables/paper_table_main_final_by_run.csv
+paper_results/main_benchmark/tables/paper_table_protocol_deltas_splitfedv2_minus_splitfedv1.csv
+paper_results/main_benchmark/tables/paper_table_tradeoff_ranking.csv
+paper_results/main_benchmark/figures/
+```
+
+Important client-count files:
+
+```text
+paper_results/client_count_ablation/tables/client_clean_final_metrics.csv
+paper_results/client_count_ablation/tables/client_clean_round_metrics.csv
+paper_results/client_count_ablation/tables/paper_table_client_count_summary_mean_std.csv
+paper_results/client_count_ablation/tables/paper_table_client_count_final_by_run.csv
+paper_results/client_count_ablation/figures/
+```
+
+Important stress-test files:
+
+```text
+paper_results/stress_non_iid/tables/paper_table_stress_feasibility_by_protocol_clients.csv
+paper_results/stress_non_iid/tables/paper_table_stress_completed_metrics_mean_std.csv
+paper_results/stress_non_iid/figures/
+```
+
+---
+
+## 30. GPU monitoring
+
+The Slurm script starts a background `nvidia-smi` monitor for the server and each client.
+
+GPU CSV files are saved in:
+
+```text
+logs/creditcard/<RUN_NAME>/gpu_*.csv
+```
 
 Example:
 
 ```text
-splitfedv1_c4_alpha0.5_seed10_r50_runXXXXX
-splitfedv2_c4_alpha0.5_seed10_r50_runYYYYY
+gpu_server_<JOBID>.csv
+gpu_client0_<JOBID>.csv
+gpu_client1_<JOBID>.csv
 ```
 
-Both are grouped together because they share:
+Each line contains:
 
 ```text
-num_clients = 4
-alpha = 0.5
-seed = 10
-rounds = 50
+timestamp, gpu_name, utilization.gpu, memory.used, power.draw
 ```
 
-but differ in:
+The paper-analysis script summarizes GPU logs into:
 
 ```text
-protocol
+*_gpu_by_process.csv
+*_gpu_by_run.csv
 ```
 
-Each protocol receives one line in the same plot.
-
-These plots are saved under:
-
-```text
-results/plots/protocol_comparison/
-```
+The script matches GPU logs using the full run name, not by scanning unrelated GPU files.
 
 ---
 
-### 25.3 Summary plots
-
-These are high-level plots across runs.
-
-Saved under:
-
-```text
-results/plots/summary/
-```
-
-Examples:
-
-```text
-final_auprc_by_alpha.png
-final_f1_by_alpha.png
-```
-
-These are useful after running many protocols, alpha values, and seeds.
-
----
-
-## 26. Recommended plotting workflow
-
-After jobs finish:
-
-```bash
-python scripts/analysis/collect_results.py
-python scripts/analysis/plot_results.py
-```
-
-Inspect:
-
-```bash
-ls results/summary
-ls results/plots
-ls results/plots/per_run
-ls results/plots/protocol_comparison
-ls results/plots/summary
-```
-
----
-
-## 27. GPU checking
-
-The Python code automatically uses GPU if CUDA is visible:
-
-```python
-torch.device("cuda" if torch.cuda.is_available() else "cpu")
-```
-
-To confirm whether your Slurm job sees GPUs, add or check GPU logs in the server/client logs.
-
-Manual check inside an allocated environment:
-
-```bash
-nvidia-smi
-python - <<'PY'
-import torch
-print(torch.cuda.is_available())
-if torch.cuda.is_available():
-    print(torch.cuda.get_device_name(0))
-PY
-```
-
-If `torch.cuda.is_available()` is `False`, the run is CPU-only even if the code is GPU-capable.
-
----
-
-## 28. Useful Slurm commands
+## 31. Useful Slurm commands
 
 Submit a job:
 
 ```bash
 sbatch run_creditcard_4client.sbatch
+```
+
+Submit with variables:
+
+```bash
+PROTOCOL=splitfedv1 ALPHA=0.5 SEED=10 ROUNDS=50 NUM_CLIENTS=4 SPLIT_POINT=block3 sbatch run_creditcard_4client.sbatch
 ```
 
 Check queue:
@@ -1173,24 +1314,30 @@ Cancel a job:
 scancel <JOBID>
 ```
 
-Show partitions and nodes:
+Cancel multiple jobs:
+
+```bash
+scancel <JOBID1> <JOBID2> <JOBID3>
+```
+
+Show nodes:
 
 ```bash
 sinfo
 sinfo -N -l
 ```
 
-Check completed job resource usage:
+Show job accounting:
 
 ```bash
-sacct -j <JOBID> --format=JobID,JobName,Elapsed,MaxRSS,AveRSS,State
+sacct -j <JOBID> --format=JobID,JobName,State,ExitCode,Elapsed,NodeList
 ```
 
 ---
 
-## 29. Common troubleshooting
+## 32. Common troubleshooting
 
-### Problem: `CREDITCARD_CSV` not found
+### 32.1 `creditcard.csv` not found
 
 Check:
 
@@ -1205,9 +1352,15 @@ Expected:
 /data/datasets/$USER/creditcard/creditcard.csv
 ```
 
+The sbatch script sets this path automatically:
+
+```bash
+export CREDITCARD_CSV="/data/datasets/$USER/creditcard/creditcard.csv"
+```
+
 ---
 
-### Problem: `ModuleNotFoundError: src`
+### 32.2 `ModuleNotFoundError: src`
 
 Run from the repository root and set:
 
@@ -1215,62 +1368,82 @@ Run from the repository root and set:
 export PYTHONPATH=$PWD
 ```
 
-The Slurm script already sets this.
-
----
-
-### Problem: clients fail to connect
-
-Check the server log:
+The sbatch script already sets:
 
 ```bash
-tail -n 100 server_<JOBID>.log
-```
-
-Check that:
-
-```text
-COLEXT_SERVER_ADDRESS
-```
-
-is correctly passed to each client.
-
----
-
-### Problem: Hydra output folder overwritten
-
-Make sure the run name includes job ID:
-
-```text
-_run<JOBID>
-```
-
-Example:
-
-```text
-splitfedv2_c4_alpha0.5_seed10_r50_run25540
+export PYTHONPATH="$ROOT"
 ```
 
 ---
 
-### Problem: plots do not show protocol comparison
+### 32.3 Clients cannot connect to the server
 
-Protocol-comparison plots are only generated when at least two runs have the same setup except for protocol.
+Check:
 
-Example required pair:
-
-```text
-splitfedv1_c4_alpha0.5_seed10_r50_runXXXXX
-splitfedv2_c4_alpha0.5_seed10_r50_runYYYYY
+```bash
+tail -n 100 logs/creditcard/<RUN_NAME>/server_<JOBID>.log
+tail -n 100 logs/creditcard/<RUN_NAME>/client0_<JOBID>.log
 ```
 
-If only one protocol exists for that setup, no combined protocol plot is generated.
+Make sure the server address printed in `run_info`.txt` matches the client address:
+`
+```bash
+cat logs/creditcard/<RUN_NAME>/run_info.txt
+```
+
+The script currently uses:
+
+```text
+PORT=8080
+```
+
+This is fine for sequential benchmark execution. If you run multiple jobs at the same time on the same server node, port conflicts can occur.
 
 ---
 
-## 30. Quick start summary
+### 32.4 GPU exists but PyTorch does not use it
 
-From scratch:
+Check inside the job log:
+
+```text
+torch.cuda.is_available() = True
+GPU name = Tesla T4
+```
+
+If it says `False`, then the installed PyTorch build or environment is CPU-only, or CUDA is not visible inside the job.
+
+---
+
+### 32.5 Paper-analysis script says no metrics found
+
+Check that the expected folders contain `fit_metrics.yaml` and `eval_metrics.yaml`:
+
+```bash
+find outputs/main_benchmark -maxdepth 2 -type f \( -name "fit_metrics.yaml" -o -name "eval_metrics.yaml" \) | head
+find outputs/client_count_ablation -maxdepth 2 -type f \( -name "fit_metrics.yaml" -o -name "eval_metrics.yaml" \) | head
+```
+
+If your results are still under `outputs/creditcard`, move/copy them to the benchmark-specific folders or use the general analysis scripts instead.
+
+---
+
+### 32.6 Duplicate lines in plots
+
+Duplicate lines usually mean old/debug/duplicate runs are mixed with final benchmark runs.
+
+For paper plots, keep benchmark folders clean:
+
+```text
+outputs/main_benchmark/
+outputs/client_count_ablation/
+outputs/stress_non_iid/
+```
+
+Do not mix old debug runs, failed runs, stress runs, and final benchmark runs in the same analysis folder.
+
+---
+
+## 33. Quick start from scratch
 
 ```bash
 # 1. Clone
@@ -1296,59 +1469,96 @@ ls -lh $CREDITCARD_CSV
 python -c "from slbd.server.app import start_server; from slbd.client.app import start_client; print('slbd ok')"
 python -c "import src; print('repo src ok')"
 
-# 5. Debug run
-PROTOCOL=splitfedv2 ALPHA=0.5 SEED=10 ROUNDS=5 sbatch run_creditcard_4client.sbatch
+# 5. Short debug job
+PROTOCOL=splitfedv2 ALPHA=0.5 SEED=10 ROUNDS=5 NUM_CLIENTS=4 SPLIT_POINT=block1 sbatch run_creditcard_4client.sbatch
 
-# 6. Check logs
+# 6. Monitor
 squeue --me
-tail -n 100 server_<JOBID>.log
 
-# 7. Collect results and plot
+# 7. After completion, inspect logs and outputs
+ls logs/creditcard
+ls outputs/creditcard
+
+# 8. General results and plots
 python scripts/analysis/collect_results.py
 python scripts/analysis/plot_results.py
 ```
 
 ---
 
-## 31. Current recommended final benchmark
+## 34. Recommended final benchmark for the current paper
 
-Use this for final paper experiments:
+Use these settings for the main benchmark:
 
 ```text
 Protocols: splitfedv1, splitfedv2
 Clients: 4
 Alpha values: 100, 1.0, 0.5
-Seeds: 10, 20, 30
+Split points: block1, block2, block3
+Seeds: 10, 30
 Rounds: 50
 Local epochs: 1
 Batch size: 512
 Optimizer: Adam
 Learning rate: 0.001
 Weight decay: 0.00001
-Split point: block1
 Class weight: [1.0, 50.0]
 ```
 
-Run all combinations, then collect and plot.
+Use these settings for the client-count ablation:
+
+```text
+Protocols: splitfedv1, splitfedv2
+Clients: 2, 3, 4
+Alpha: 0.5
+Split point: block1
+Seeds: 10, 30
+Rounds: 50
+```
+
+Use the severe non-IID test only as a stress test:
+
+```text
+Alpha: 0.1
+Rounds: 5 first
+```
 
 ---
 
-## 32. Notes on realism
+## 35. Current limitations
 
-This benchmark simulates realistic banking conditions through:
+This repository simulates realistic banking conditions through:
 
-* Non-IID client label skew
-* Extreme class imbalance
-* Chronological train/test split
-* Physical Hayrat cluster execution
-* Fraud-specific metrics
-* System-efficiency metrics
+- non-IID label skew
+- extreme fraud class imbalance
+- chronological train/test split
+- physical Hayrat cluster execution
+- fraud-specific evaluation metrics
+- system-efficiency metrics
+- GPU utilization logs
 
-However, it does not yet fully simulate:
+However, it does not yet fully include:
 
-* Real bank-private datasets
-* Network latency and bandwidth limits
-* Client availability/dropout
-* Secure aggregation
-* Differential privacy
-* True multi-tier deployment
+- real bank-private datasets
+- true network latency and bandwidth simulation
+- client dropout / availability modeling
+- secure aggregation
+- differential privacy
+- formal privacy guarantees
+- true multi-tier client-edge-cloud deployment
+- full statistical repetition across many seeds
+
+---
+
+## 36. Notes for future extension
+
+Possible next extensions:
+
+- Add more protocols such as FSL, LocFedMix, SplitAvg, FLEX-SFL, ESFL, or hierarchical SFL.
+- Add a minimum-samples-per-client check to avoid empty partitions under extreme alpha values.
+- Add network bandwidth and latency simulation.
+- Add client dropout and straggler simulation.
+- Add secure aggregation or differential privacy.
+- Evaluate more tabular fraud architectures beyond the current MLP.
+- Use larger or additional fraud datasets.
+- Build a true multi-tier benchmark with clients, edge servers, and a global server.
