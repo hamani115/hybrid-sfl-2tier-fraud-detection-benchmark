@@ -1385,8 +1385,8 @@ tail -n 100 logs/creditcard/<RUN_NAME>/server_<JOBID>.log
 tail -n 100 logs/creditcard/<RUN_NAME>/client0_<JOBID>.log
 ```
 
-Make sure the server address printed in `run_info`.txt` matches the client address:
-`
+Make sure the server address printed in `run_info.txt` matches the client address:
+
 ```bash
 cat logs/creditcard/<RUN_NAME>/run_info.txt
 ```
